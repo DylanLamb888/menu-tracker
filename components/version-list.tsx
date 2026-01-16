@@ -3,7 +3,8 @@ import { StatusBadge } from "@/components/status-badge";
 import { StatusActions } from "@/components/status-actions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { FileText, Download, ExternalLink, UserCircle, AlertCircle } from "lucide-react";
 
 type VersionStatus = "draft" | "in_review" | "approved" | "live" | "archived";
 type UserRole = "admin" | "designer" | "approver" | "reviewer" | "contributor";
@@ -18,15 +19,19 @@ interface Version {
   changeSummary: string | null;
   createdAt: Date;
   uploadedByName: string;
+  assignedTo: string | null;
+  assignedToName: string | null;
+  parentVersionId: string | null;
 }
 
 interface VersionListProps {
   versions: Version[];
   menuId: string;
   userRole: UserRole;
+  currentUserId: string;
 }
 
-export function VersionList({ versions, menuId, userRole }: VersionListProps) {
+export function VersionList({ versions, menuId, userRole, currentUserId }: VersionListProps) {
   if (versions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -57,8 +62,10 @@ export function VersionList({ versions, menuId, userRole }: VersionListProps) {
           minute: "2-digit",
         }).format(new Date(version.createdAt));
 
+        const isAssignedToMe = version.assignedTo === currentUserId;
+
         return (
-          <Card key={version.id} className="border-[#3D2E2E]/10">
+          <Card key={version.id} className={`border-[#3D2E2E]/10 ${isAssignedToMe ? "ring-2 ring-[#E07A5F]/50" : ""}`}>
             <CardContent className="p-4">
               <div className="flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-4">
@@ -67,12 +74,24 @@ export function VersionList({ versions, menuId, userRole }: VersionListProps) {
                       <FileText className="h-5 w-5 text-[#E07A5F]" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-sm font-medium text-[#3D2E2E] tabular-nums">
                           {version.versionLabel}
                         </span>
                         <StatusBadge status={version.status} />
+                        {isAssignedToMe && (
+                          <Badge variant="outline" className="border-[#E07A5F] text-[#E07A5F] bg-[#E07A5F]/5">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            Your turn
+                          </Badge>
+                        )}
                       </div>
+                      {version.assignedToName && (
+                        <div className="flex items-center gap-1 text-xs text-[#3D2E2E]/60 mt-0.5">
+                          <UserCircle className="h-3 w-3" />
+                          Assigned to {version.assignedToName}
+                        </div>
+                      )}
                       <p className="text-sm text-[#3D2E2E]/70 mt-1 truncate max-w-xs">
                         {version.pdfFilename}
                       </p>
@@ -92,7 +111,7 @@ export function VersionList({ versions, menuId, userRole }: VersionListProps) {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <a href={version.pdfUrl} target="_blank" rel="noopener noreferrer">
+                    <Link href={`/menus/${menuId}/versions/${version.id}`}>
                       <Button
                         variant="outline"
                         size="sm"
@@ -101,7 +120,7 @@ export function VersionList({ versions, menuId, userRole }: VersionListProps) {
                         <ExternalLink className="h-4 w-4 mr-1" />
                         View
                       </Button>
-                    </a>
+                    </Link>
                     <a href={version.pdfUrl} download={version.pdfFilename}>
                       <Button
                         variant="outline"

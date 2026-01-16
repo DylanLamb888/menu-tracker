@@ -1,26 +1,57 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { PdfUpload } from "@/components/pdf-upload";
+import { ItemChangesInput, type ItemChange } from "@/components/item-changes-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, GitBranch } from "lucide-react";
+
+interface ParentVersion {
+  id: string;
+  versionLabel: string;
+  status: string;
+}
 
 export default function NewVersionPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const menuId = params.id as string;
+  const fromVersionId = searchParams.get("from");
 
   const [file, setFile] = useState<File | null>(null);
   const [reasonForChange, setReasonForChange] = useState("");
   const [changeSummary, setChangeSummary] = useState("");
+  const [itemChanges, setItemChanges] = useState<ItemChange[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [parentVersion, setParentVersion] = useState<ParentVersion | null>(null);
+
+  // Fetch parent version info if branching
+  useEffect(() => {
+    if (fromVersionId) {
+      fetch(`/api/versions/${fromVersionId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.version) {
+            setParentVersion({
+              id: data.version.id,
+              versionLabel: data.version.versionLabel,
+              status: data.version.status,
+            });
+          }
+        })
+        .catch(() => {
+          // Ignore errors, just don't show parent info
+        });
+    }
+  }, [fromVersionId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,6 +69,19 @@ export default function NewVersionPage() {
       formData.append("file", file);
       formData.append("reasonForChange", reasonForChange);
       formData.append("changeSummary", changeSummary);
+
+      // Include parent version ID if branching
+      if (fromVersionId) {
+        formData.append("parentVersionId", fromVersionId);
+      }
+
+      // Filter out empty item changes and send as JSON
+      const validChanges = itemChanges.filter(
+        (c) => c.itemName.trim() || c.oldValue.trim() || c.newValue.trim()
+      );
+      if (validChanges.length > 0) {
+        formData.append("itemChanges", JSON.stringify(validChanges));
+      }
 
       const response = await fetch(`/api/menus/${menuId}/versions`, {
         method: "POST",
@@ -79,8 +123,19 @@ export default function NewVersionPage() {
         <Card className="max-w-2xl border-[#3D2E2E]/10">
           <CardHeader>
             <CardTitle className="text-xl text-[#3D2E2E]">
-              Upload New Version
+              {parentVersion ? "Create Branch" : "Upload New Version"}
             </CardTitle>
+            {parentVersion && (
+              <div className="flex items-center gap-2 mt-2 text-sm text-[#3D2E2E]/70">
+                <GitBranch className="h-4 w-4 text-[#E07A5F]" />
+                <span>
+                  Branching from{" "}
+                  <span className="font-mono font-medium text-[#3D2E2E]">
+                    {parentVersion.versionLabel}
+                  </span>
+                </span>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -116,6 +171,13 @@ export default function NewVersionPage() {
                   onChange={(e) => setChangeSummary(e.target.value)}
                   placeholder="e.g., Added 3 new dishes, updated pricing"
                   className="border-[#3D2E2E]/20 focus:border-[#E07A5F] focus:ring-[#E07A5F]"
+                />
+              </div>
+
+              <div className="border-t border-[#3D2E2E]/10 pt-4">
+                <ItemChangesInput
+                  changes={itemChanges}
+                  onChange={setItemChanges}
                 />
               </div>
 

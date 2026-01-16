@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db, versions } from "@/lib/db";
+import { db, versions, activityLogs } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -74,6 +74,20 @@ export async function PATCH(request: Request, context: RouteContext) {
       .set(updateData)
       .where(eq(versions.id, versionId))
       .returning();
+
+    // Log assignment change
+    if (assignedTo !== undefined && assignedTo !== version.assignedTo) {
+      await db.insert(activityLogs).values({
+        userId: user.id,
+        action: "version_assigned",
+        targetType: "version",
+        targetId: versionId,
+        metadata: {
+          previousAssignee: version.assignedTo,
+          newAssignee: assignedTo,
+        },
+      });
+    }
 
     return NextResponse.json({ version: updatedVersion });
   } catch (error) {

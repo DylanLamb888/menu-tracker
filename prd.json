@@ -1,0 +1,121 @@
+{
+  "project": "LMA Menu Version Control",
+  "phase": "Phase 3 - Collaboration",
+  "stories": [
+    {
+      "id": "US-006",
+      "title": "PDF Inline Viewer",
+      "description": "View PDF inline without downloading. Basic zoom and page navigation.",
+      "priority": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "PDF renders inline on version detail view",
+        "Basic zoom controls (fit width, zoom in/out)",
+        "Page navigation for multi-page PDFs",
+        "Download button still available"
+      ]
+    },
+    {
+      "id": "US-007",
+      "title": "Version Assignment",
+      "description": "Assign a version to a specific user to indicate it's their turn to act.",
+      "priority": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "Admin can assign version to any user",
+        "Assigned user shown on version card",
+        "Dashboard shows 'attention required' indicator for assigned items",
+        "Activity log entry on assignment change"
+      ]
+    },
+    {
+      "id": "US-008",
+      "title": "Item-Level Change Tracking",
+      "description": "Track specific item changes (e.g., price changes) within a version.",
+      "priority": 3,
+      "passes": true,
+      "acceptance_criteria": [
+        "Add item changes when creating version (item name, old value, new value)",
+        "Display item changes on version detail",
+        "Optional - can create version without item changes"
+      ]
+    },
+    {
+      "id": "US-009",
+      "title": "Version Tree Visualization",
+      "description": "Visual tree showing version history with branching.",
+      "priority": 4,
+      "passes": true,
+      "acceptance_criteria": [
+        "Tree/timeline view of all versions for a menu",
+        "Status color-coded nodes",
+        "Clear live version indicator",
+        "Click node to see version details"
+      ]
+    },
+    {
+      "id": "US-010",
+      "title": "Branch Creation",
+      "description": "Create new version branching from any existing version.",
+      "priority": 5,
+      "passes": true,
+      "acceptance_criteria": [
+        "Create new version from specific parent (not just latest)",
+        "Parent version reference stored and displayed",
+        "Branch shown in version tree"
+      ]
+    },
+    {
+      "id": "US-011",
+      "title": "Version Comments",
+      "description": "Add comments to versions with category tagging.",
+      "priority": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "Add comment to a version with text content",
+        "Select comment category (Content, Design, Pricing, Other)",
+        "Display comments list on version detail page",
+        "Show comment author, timestamp, and category"
+      ]
+    },
+    {
+      "id": "US-012",
+      "title": "@Mentions in Comments",
+      "description": "Tag users in comments with autocomplete.",
+      "priority": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "Type @ to trigger user autocomplete in comment input",
+        "Select user from dropdown to insert mention",
+        "Mentions stored in comment_mentions table",
+        "Mentioned usernames highlighted in comment display"
+      ]
+    },
+    {
+      "id": "US-013",
+      "title": "Activity Log UI",
+      "description": "View activity history for menus and versions.",
+      "priority": 3,
+      "passes": true,
+      "acceptance_criteria": [
+        "Activity log page showing recent actions",
+        "Filter by action type (status changes, comments, uploads)",
+        "Show user, action, target, and timestamp",
+        "Link to related version/menu from activity item"
+      ]
+    },
+    {
+      "id": "US-014",
+      "title": "Dashboard Search and Filter",
+      "description": "Search and filter menus on dashboard.",
+      "priority": 4,
+      "passes": true,
+      "acceptance_criteria": [
+        "Search menus by name",
+        "Filter by category",
+        "Filter by current status",
+        "Clear filters button"
+      ]
+    }
+  ]
+}

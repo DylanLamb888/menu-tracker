@@ -1,0 +1,178 @@
+# Menu Tracker Progress Log
+
+## Codebase Patterns
+
+### Database
+- Drizzle ORM with Neon Postgres (switched from @vercel/postgres)
+- Schema in `lib/db/schema.ts`, connection in `lib/db/index.ts`
+- Use `db.select().from()` with `.where()` for queries
+- Batch fetches to avoid N+1 (see `app/menus/[id]/page.tsx` for pattern)
+
+### Auth
+- Password-only auth via `lib/auth.ts`
+- `getCurrentUser()` returns user or null
+- JWT in HTTP-only cookie, 30-day expiry
+- Middleware redirects unauthenticated users to /login
+
+### Components
+- shadcn/ui (new-york style) in `components/ui/`
+- Custom components in `components/`
+- App shell wrapper for consistent layout
+- Status colors: Draft=#9CA3AF, In Review=#F59E0B, Approved=#10B981, Live=#E07A5F
+
+### API Routes
+- Next.js App Router API routes in `app/api/`
+- Always check auth via `getCurrentUser()`
+- Return `NextResponse.json()` with appropriate status codes
+
+### File Storage
+- Vercel Blob for PDFs via `lib/blob.ts`
+- `uploadPdf()` helper returns URL and filename
+
+### Permissions
+- Role-based permissions in `lib/permissions.ts`
+- `canChangeStatus()` and `getAvailableTransitions()` for status workflow
+
+---
+
+## Completed Work
+
+### 2026-01-16: MVP Foundation Complete
+
+**US-001: Database Schema** - COMPLETE
+- 12 tables with all relationships
+- Enums for roles, statuses, categories
+- Type exports for all entities
+
+**US-002: Authentication** - COMPLETE
+- Login page with password-only auth
+- Session management with JWT cookies
+- Middleware protection for routes
+- /api/auth/login, /api/auth/logout, /api/auth/me
+
+**US-003: Dashboard** - COMPLETE
+- Menu grid with status badges
+- Empty state handling
+- Admin-only "New Menu" button
+- Efficient single-query with subquery for latest status
+
+**US-004: PDF Upload** - COMPLETE
+- Menu detail page with version list
+- New version form with PDF upload
+- Vercel Blob integration
+- Version created with draft status
+
+**US-005: Status Workflow** - COMPLETE
+- Status transition buttons per role
+- Permissions enforced server-side
+- Auto-archive previous live version
+- Activity log on status change
+
+**Additional: New Menu Flow** - COMPLETE
+- /menus/new page for creating menus
+- Category selection dropdown
+- Redirect to menu detail after creation
+
+---
+
+### 2026-01-16: Phase 2 - Version Management Complete
+
+**US-006: PDF Inline Viewer** - COMPLETE
+- `components/pdf-viewer.tsx` - react-pdf based viewer
+- Page navigation, zoom controls, download button
+- Version detail page `/menus/[id]/versions/[versionId]` with inline viewer
+
+**US-007: Version Assignment** - COMPLETE
+- Assignment selector component for admins
+- `GET /api/users` endpoint for user list
+- Activity log on assignment change
+- "Your turn" badge on dashboard and version list for assigned items
+- Ring highlight on cards when assigned to current user
+
+**US-008: Item-Level Change Tracking** - COMPLETE
+- `components/item-changes-input.tsx` - dynamic form for item changes
+- Item changes saved to `item_changes` table on version creation
+- Item changes displayed on version detail page
+
+**US-009: Version Tree Visualization** - COMPLETE
+- `components/version-tree.tsx` - timeline visualization
+- `components/version-views.tsx` - toggle between Timeline and Details views
+- Status-colored nodes with "Current" badge for live version
+- Click nodes to navigate to version detail
+
+**US-010: Branch Creation** - COMPLETE
+- "Branch" button on version detail page links to `/menus/[id]/new-version?from=[versionId]`
+- New version page shows parent version when branching
+- API accepts explicit `parentVersionId` parameter
+- Version tree shows branch indicator with GitBranch icon
+- Version detail shows "Branched from" link to parent version
+
+---
+
+### 2026-01-16: Vercel React Best Practices Applied
+
+**Bundle Optimization**
+- Added `optimizePackageImports: ["lucide-react"]` to next.config.ts
+- Reduces lucide-react bundle by tree-shaking unused icons
+
+**Dynamic Import for PDF Viewer**
+- Created `components/pdf-viewer-lazy.tsx` with `next/dynamic`
+- react-pdf (~500KB) now loaded only when viewing version detail page
+- `ssr: false` since PDF.js requires browser APIs
+- Loading state shown while component loads
+
+**Already Following Best Practices**
+- `React.cache()` for auth deduplication in `lib/auth.ts`
+- "Start early, await late" pattern in `app/menus/[id]/page.tsx`
+- Efficient subqueries in dashboard to avoid N+1
+- `useCallback` for event handlers in pdf-viewer
+
+---
+
+### 2026-01-16: Phase 3 - Collaboration Started
+
+**US-011: Version Comments** - COMPLETE
+- `app/api/versions/[id]/comments/route.ts` - GET/POST for comments
+- `components/comment-input.tsx` - textarea with category selector buttons
+- `components/comments-list.tsx` - displays comments with author, timestamp, category badge
+- `components/comments-section.tsx` - combines input and list with refresh state
+- Comments section added to version detail page
+
+**US-012: @Mentions in Comments** - COMPLETE
+- Comment input detects @ and shows user autocomplete dropdown
+- Arrow keys + Enter/Tab to select users from dropdown
+- API parses @mentions and stores in `comment_mentions` table
+- Comments list highlights @mentions in coral color
+
+**US-013: Activity Log UI** - COMPLETE
+- `app/api/activity/route.ts` - GET endpoint with action filtering
+- `app/activity/page.tsx` - Activity page with filter buttons
+- Navigation added to app-shell (Menus, Activity tabs)
+- Links from activity items to related version/menu
+- Action type icons and color-coded badges
+
+**US-014: Dashboard Search and Filter** - COMPLETE
+- `components/dashboard-filters.tsx` - Client component with search and filters
+- Search input filters menus by name
+- Category dropdown filter (fetched from database)
+- Status dropdown filter (draft, in_review, approved, live, archived)
+- Clear filters button, "Showing X of Y" count
+- Categories fetched in parallel with menus
+
+---
+
+## Phase 3 COMPLETE
+
+All collaboration features implemented:
+- Version comments with categories
+- @mentions with autocomplete
+- Activity log UI with filters
+- Dashboard search and filtering
+
+---
+
+## Summary of All Phases
+
+**Phase 1 (MVP):** Authentication, Dashboard, Menu CRUD, PDF Upload, Status Workflow
+**Phase 2 (Version Management):** PDF Viewer, Assignments, Item Changes, Version Tree, Branching
+**Phase 3 (Collaboration):** Comments, @Mentions, Activity Log, Search & Filter

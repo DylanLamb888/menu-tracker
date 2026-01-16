@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db, versions, menus } from "@/lib/db";
+import { db, versions, menus, itemChanges } from "@/lib/db";
 import { eq, desc } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { uploadPdf } from "@/lib/blob";
@@ -49,6 +49,8 @@ export async function POST(request: Request, context: RouteContext) {
     const file = formData.get("file") as File | null;
     const reasonForChange = formData.get("reasonForChange") as string | null;
     const changeSummary = formData.get("changeSummary") as string | null;
+    const itemChangesJson = formData.get("itemChanges") as string | null;
+    const parentVersionIdParam = formData.get("parentVersionId") as string | null;
 
     if (!file || file.type !== "application/pdf") {
       return NextResponse.json(
@@ -85,20 +87,36 @@ export async function POST(request: Request, context: RouteContext) {
     }
     const versionLabel = `v${versionNumber}.0`;
 
-    // Get the latest version ID for parent reference
-    const [latestVersion] = await db
-      .select({ id: versions.id })
-      .from(versions)
-      .where(eq(versions.menuId, menuId))
-      .orderBy(desc(versions.createdAt))
-      .limit(1);
+    // Determine parent version: use provided ID, or fall back to latest
+    let parentVersionId: string | null = null;
+    if (parentVersionIdParam) {
+      // Verify the parent version exists and belongs to this menu
+      const [parentVersion] = await db
+        .select({ id: versions.id })
+        .from(versions)
+        .where(eq(versions.id, parentVersionIdParam))
+        .limit(1);
+
+      if (parentVersion) {
+        parentVersionId = parentVersion.id;
+      }
+    } else {
+      // Fall back to latest version as parent
+      const [latestVersion] = await db
+        .select({ id: versions.id })
+        .from(versions)
+        .where(eq(versions.menuId, menuId))
+        .orderBy(desc(versions.createdAt))
+        .limit(1);
+      parentVersionId = latestVersion?.id || null;
+    }
 
     // Create version record
     const [newVersion] = await db
       .insert(versions)
       .values({
         menuId,
-        parentVersionId: latestVersion?.id || null,
+        parentVersionId,
         versionLabel,
         status: "draft",
         pdfUrl: url,
@@ -108,6 +126,30 @@ export async function POST(request: Request, context: RouteContext) {
         uploadedBy: user.id,
       })
       .returning();
+
+    // Insert item changes if provided
+    if (itemChangesJson) {
+      try {
+        const changes = JSON.parse(itemChangesJson) as Array<{
+          itemName: string;
+          oldValue: string;
+          newValue: string;
+        }>;
+
+        if (changes.length > 0) {
+          await db.insert(itemChanges).values(
+            changes.map((change) => ({
+              versionId: newVersion.id,
+              itemName: change.itemName,
+              oldValue: change.oldValue || null,
+              newValue: change.newValue || null,
+            }))
+          );
+        }
+      } catch {
+        // Ignore JSON parse errors for item changes
+      }
+    }
 
     // Update menu's updatedAt timestamp
     await db

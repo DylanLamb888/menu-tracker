@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { db, menus, versions, categories, users } from "@/lib/db";
 import { eq, desc, inArray } from "drizzle-orm";
 import { AppShell } from "@/components/app-shell";
-import { VersionList } from "@/components/version-list";
+import { VersionViews } from "@/components/version-views";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus } from "lucide-react";
 
@@ -41,27 +41,45 @@ async function getMenuWithVersions(menuId: string) {
       changeSummary: versions.changeSummary,
       createdAt: versions.createdAt,
       uploadedBy: versions.uploadedBy,
+      assignedTo: versions.assignedTo,
+      parentVersionId: versions.parentVersionId,
     })
     .from(versions)
     .where(eq(versions.menuId, menuId))
     .orderBy(desc(versions.createdAt));
 
-  // Batch fetch all uploaders in one query
-  const uploaderIds = [...new Set(versionRows.map((v) => v.uploadedBy))];
-  const uploaderMap = new Map<string, string>();
+  // Batch fetch all uploaders and assignees in one query
+  const userIds = [
+    ...new Set([
+      ...versionRows.map((v) => v.uploadedBy),
+      ...versionRows.map((v) => v.assignedTo).filter(Boolean) as string[],
+    ]),
+  ];
+  const userMap = new Map<string, string>();
 
-  if (uploaderIds.length > 0) {
-    const uploaders = await db
+  if (userIds.length > 0) {
+    const usersList = await db
       .select({ id: users.id, name: users.name })
       .from(users)
-      .where(inArray(users.id, uploaderIds));
+      .where(inArray(users.id, userIds));
 
-    uploaders.forEach((u) => uploaderMap.set(u.id, u.name));
+    usersList.forEach((u) => userMap.set(u.id, u.name));
   }
 
-  const versionsWithUploader = versionRows.map((version) => ({
-    ...version,
-    uploadedByName: uploaderMap.get(version.uploadedBy) || "Unknown",
+  const versionsWithDetails = versionRows.map((version) => ({
+    id: version.id,
+    versionLabel: version.versionLabel,
+    status: version.status,
+    pdfUrl: version.pdfUrl,
+    pdfFilename: version.pdfFilename,
+    reasonForChange: version.reasonForChange,
+    changeSummary: version.changeSummary,
+    createdAt: version.createdAt,
+    uploadedBy: version.uploadedBy,
+    assignedTo: version.assignedTo,
+    parentVersionId: version.parentVersionId,
+    uploadedByName: userMap.get(version.uploadedBy) || "Unknown",
+    assignedToName: version.assignedTo ? userMap.get(version.assignedTo) || null : null,
   }));
 
   return {
@@ -70,7 +88,7 @@ async function getMenuWithVersions(menuId: string) {
     category: menuWithCategory.categoryName,
     createdAt: menuWithCategory.createdAt,
     updatedAt: menuWithCategory.updatedAt,
-    versions: versionsWithUploader,
+    versions: versionsWithDetails,
   };
 }
 
@@ -123,10 +141,12 @@ export default async function MenuDetailPage({ params }: MenuDetailPageProps) {
           </Link>
         </div>
 
-        <div>
-          <h3 className="text-lg font-medium text-[#3D2E2E] mb-4">Versions</h3>
-          <VersionList versions={menu.versions} menuId={id} userRole={user.role} />
-        </div>
+        <VersionViews
+          versions={menu.versions}
+          menuId={id}
+          userRole={user.role}
+          currentUserId={user.id}
+        />
       </div>
     </AppShell>
   );
