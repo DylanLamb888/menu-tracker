@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { db, menus, versions, categories } from "@/lib/db";
 import { eq, desc, sql } from "drizzle-orm";
@@ -61,10 +62,12 @@ export default async function DashboardPage() {
             </p>
           </div>
           {user.role === "admin" && (
-            <Button className="bg-[#E07A5F] hover:bg-[#E07A5F]/90 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              New Menu
-            </Button>
+            <Link href="/menus/new">
+              <Button className="bg-[#E07A5F] hover:bg-[#E07A5F]/90 text-white">
+                <Plus className="h-4 w-4 mr-2" />
+                New Menu
+              </Button>
+            </Link>
           )}
         </div>
 
@@ -78,10 +81,12 @@ export default async function DashboardPage() {
               Get started by creating your first menu to begin tracking versions.
             </p>
             {user.role === "admin" && (
-              <Button className="mt-4 bg-[#E07A5F] hover:bg-[#E07A5F]/90 text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                New Menu
-              </Button>
+              <Link href="/menus/new">
+                <Button className="mt-4 bg-[#E07A5F] hover:bg-[#E07A5F]/90 text-white">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Menu
+                </Button>
+              </Link>
             )}
           </div>
         ) : (
