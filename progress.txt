@@ -33,6 +33,13 @@
 - Role-based permissions in `lib/permissions.ts`
 - `canChangeStatus()` and `getAvailableTransitions()` for status workflow
 
+### Performance Patterns
+- Hoist `Intl.DateTimeFormat` outside components (recreating is expensive)
+- Use `useMemo` for Maps used in lookups within components
+- Hoist static JSX elements outside components to avoid recreation
+- Use `next/dynamic` with `ssr: false` for large client-only libs (react-pdf)
+- `optimizePackageImports` in next.config.ts for icon libraries
+
 ---
 
 ## Completed Work
@@ -126,6 +133,12 @@
 - "Start early, await late" pattern in `app/menus/[id]/page.tsx`
 - Efficient subqueries in dashboard to avoid N+1
 - `useCallback` for event handlers in pdf-viewer
+
+**Additional Optimizations Applied**
+- `useMemo` for versionMap in version-tree.tsx (O(1) lookups)
+- Hoisted `Intl.DateTimeFormat` formatters outside components
+- Hoisted static empty state JSX to avoid recreation per render
+- Functional `setState` updates for stable callback references
 
 ---
 
