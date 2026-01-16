@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { db, users, type User } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
@@ -64,7 +65,8 @@ export async function getSession(): Promise<SessionPayload | null> {
   return decrypt(token);
 }
 
-export async function getCurrentUser(): Promise<Omit<User, "passwordHash"> | null> {
+// React.cache() deduplicates calls within a single request
+export const getCurrentUser = cache(async (): Promise<Omit<User, "passwordHash"> | null> => {
   const session = await getSession();
   if (!session) return null;
 
@@ -84,7 +86,7 @@ export async function getCurrentUser(): Promise<Omit<User, "passwordHash"> | nul
 
   if (!user || !user.isActive) return null;
   return user;
-}
+});
 
 export async function verifyPassword(
   password: string

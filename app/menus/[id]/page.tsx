@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { db, menus, versions, categories, users } from "@/lib/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 import { AppShell } from "@/components/app-shell";
 import { VersionList } from "@/components/version-list";
 import { Button } from "@/components/ui/button";
@@ -13,30 +13,23 @@ interface MenuDetailPageProps {
 }
 
 async function getMenuWithVersions(menuId: string) {
-  const [menu] = await db
+  // Fetch menu with category in single query
+  const [menuWithCategory] = await db
     .select({
       id: menus.id,
       name: menus.name,
-      categoryId: menus.categoryId,
+      categoryName: categories.name,
       createdAt: menus.createdAt,
       updatedAt: menus.updatedAt,
     })
     .from(menus)
+    .leftJoin(categories, eq(menus.categoryId, categories.id))
     .where(eq(menus.id, menuId))
     .limit(1);
 
-  if (!menu) return null;
+  if (!menuWithCategory) return null;
 
-  let categoryName: string | null = null;
-  if (menu.categoryId) {
-    const [category] = await db
-      .select({ name: categories.name })
-      .from(categories)
-      .where(eq(categories.id, menu.categoryId))
-      .limit(1);
-    categoryName = category?.name || null;
-  }
-
+  // Fetch all versions for this menu
   const versionRows = await db
     .select({
       id: versions.id,
@@ -53,38 +46,48 @@ async function getMenuWithVersions(menuId: string) {
     .where(eq(versions.menuId, menuId))
     .orderBy(desc(versions.createdAt));
 
-  const versionsWithUploader = await Promise.all(
-    versionRows.map(async (version) => {
-      const [uploader] = await db
-        .select({ name: users.name })
-        .from(users)
-        .where(eq(users.id, version.uploadedBy))
-        .limit(1);
+  // Batch fetch all uploaders in one query
+  const uploaderIds = [...new Set(versionRows.map((v) => v.uploadedBy))];
+  const uploaderMap = new Map<string, string>();
 
-      return {
-        ...version,
-        uploadedByName: uploader?.name || "Unknown",
-      };
-    })
-  );
+  if (uploaderIds.length > 0) {
+    const uploaders = await db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .where(inArray(users.id, uploaderIds));
+
+    uploaders.forEach((u) => uploaderMap.set(u.id, u.name));
+  }
+
+  const versionsWithUploader = versionRows.map((version) => ({
+    ...version,
+    uploadedByName: uploaderMap.get(version.uploadedBy) || "Unknown",
+  }));
 
   return {
-    ...menu,
-    category: categoryName,
+    id: menuWithCategory.id,
+    name: menuWithCategory.name,
+    category: menuWithCategory.categoryName,
+    createdAt: menuWithCategory.createdAt,
+    updatedAt: menuWithCategory.updatedAt,
     versions: versionsWithUploader,
   };
 }
 
 export default async function MenuDetailPage({ params }: MenuDetailPageProps) {
-  const user = await getCurrentUser();
+  // Start user fetch early, await late
+  const userPromise = getCurrentUser();
+  const { id } = await params;
 
+  // Start menu fetch in parallel
+  const menuPromise = getMenuWithVersions(id);
+
+  const user = await userPromise;
   if (!user) {
     redirect("/login");
   }
 
-  const { id } = await params;
-  const menu = await getMenuWithVersions(id);
-
+  const menu = await menuPromise;
   if (!menu) {
     notFound();
   }

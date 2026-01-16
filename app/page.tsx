@@ -1,64 +1,54 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db, menus, versions, categories } from "@/lib/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { AppShell } from "@/components/app-shell";
 import { MenuCard } from "@/components/menu-card";
 import { Button } from "@/components/ui/button";
 import { Plus, FileText } from "lucide-react";
 
 async function getMenusWithDetails() {
-  const allMenus = await db
+  // Use a single query with subqueries to avoid N+1
+  const result = await db
     .select({
       id: menus.id,
       name: menus.name,
-      categoryId: menus.categoryId,
       updatedAt: menus.updatedAt,
+      categoryName: categories.name,
+      // Subquery for latest version status
+      latestStatus: sql<string | null>`(
+        SELECT ${versions.status}
+        FROM ${versions}
+        WHERE ${versions.menuId} = ${menus.id}
+        ORDER BY ${versions.createdAt} DESC
+        LIMIT 1
+      )`.as("latest_status"),
     })
     .from(menus)
+    .leftJoin(categories, eq(menus.categoryId, categories.id))
     .where(eq(menus.isArchived, false))
     .orderBy(desc(menus.updatedAt));
 
-  const menusWithDetails = await Promise.all(
-    allMenus.map(async (menu) => {
-      let categoryName: string | null = null;
-      if (menu.categoryId) {
-        const [category] = await db
-          .select({ name: categories.name })
-          .from(categories)
-          .where(eq(categories.id, menu.categoryId))
-          .limit(1);
-        categoryName = category?.name || null;
-      }
-
-      const [latestVersion] = await db
-        .select({ status: versions.status })
-        .from(versions)
-        .where(eq(versions.menuId, menu.id))
-        .orderBy(desc(versions.createdAt))
-        .limit(1);
-
-      return {
-        id: menu.id,
-        name: menu.name,
-        category: categoryName,
-        currentStatus: latestVersion?.status || null,
-        updatedAt: menu.updatedAt,
-      };
-    })
-  );
-
-  return menusWithDetails;
+  return result.map((menu) => ({
+    id: menu.id,
+    name: menu.name,
+    category: menu.categoryName,
+    currentStatus: menu.latestStatus as "draft" | "in_review" | "approved" | "live" | "archived" | null,
+    updatedAt: menu.updatedAt,
+  }));
 }
 
 export default async function DashboardPage() {
-  const user = await getCurrentUser();
+  // Start both fetches in parallel, await late
+  const userPromise = getCurrentUser();
+  const menusPromise = getMenusWithDetails();
 
+  const user = await userPromise;
   if (!user) {
     redirect("/login");
   }
 
-  const menusList = await getMenusWithDetails();
+  const menusList = await menusPromise;
 
   return (
     <AppShell userName={user.name}>
