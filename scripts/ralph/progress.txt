@@ -1,0 +1,35 @@
+# Ralph Progress Log
+Started: 2026-01-16
+---
+
+## Codebase Patterns
+
+- Use `cn()` from `@/lib/utils` for className merging
+- shadcn/ui components go in `components/ui/`
+- Path alias `@/*` maps to project root
+- Color palette: cream (#FAF7F2), coral (#E07A5F), deep brown (#3D2E2E)
+- Status colors: Draft (#9CA3AF), In Review (#F59E0B), Approved (#10B981), Live (#E07A5F)
+- Database: Drizzle ORM with Vercel Postgres, schema in `lib/db/schema.ts`
+- Database connection: `db` export from `@/lib/db`
+- Migrations: `bun run db:generate` to generate, `bun run db:push` to push to DB
+- DB scripts use `dotenv-cli` to load `.env.local` automatically
+- Need `POSTGRES_URL` alias in `.env.local` pointing to `menutrackerdb_POSTGRES_URL`
+
+---
+
+## 2026-01-16 - US-001
+
+- Implemented database schema with Drizzle ORM
+- Files created:
+  - `lib/db/schema.ts` - All table definitions and types
+  - `lib/db/index.ts` - Database connection export
+  - `drizzle.config.ts` - Drizzle Kit configuration
+  - `drizzle/0000_*.sql` - Initial migration
+  - `.env.local.example` - Example environment variables
+- **Learnings for future iterations:**
+  - Drizzle uses `pgEnum()` for PostgreSQL enums
+  - Use `$inferSelect` and `$inferInsert` for TypeScript types
+  - Vercel Postgres requires `POSTGRES_URL` env var
+  - .gitignore had `.env*` pattern, added `!.env*.example` exception
+
+---

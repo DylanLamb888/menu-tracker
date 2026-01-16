@@ -1,0 +1,90 @@
+{
+  "name": "Menu Version Control MVP",
+  "branchName": "ralph/mvp-foundation",
+  "description": "Foundation for the LMA Menu Version Control System",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Database Schema Setup",
+      "description": "Set up Vercel Postgres with Drizzle ORM and create initial schema",
+      "priority": 1,
+      "acceptanceCriteria": [
+        "Drizzle ORM configured with Vercel Postgres",
+        "User, Menu, Version, Comment tables created",
+        "Migrations run successfully"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Simple Password Authentication",
+      "description": "Implement password-based auth where each user has a unique password",
+      "priority": 2,
+      "acceptanceCriteria": [
+        "Login page at /login with single password input field",
+        "POST /api/auth/login - validates password, returns user, sets session cookie",
+        "POST /api/auth/logout - clears session cookie",
+        "GET /api/auth/me - returns current user data or 401",
+        "lib/auth.ts - session helpers using jose for JWT (encrypt/decrypt cookie)",
+        "middleware.ts - protects all routes except /login and /api/auth/*",
+        "Session cookie is HTTP-only with 30-day expiry",
+        "Invalid password returns appropriate error message",
+        "bun run build passes without errors"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Dashboard Menu List",
+      "description": "Display all menus with current status on dashboard",
+      "priority": 3,
+      "acceptanceCriteria": [
+        "app/page.tsx shows dashboard (replaces Next.js boilerplate)",
+        "app/layout.tsx includes app shell with navigation header",
+        "GET /api/menus returns array of menus with their current version status",
+        "Menu cards display: name, category, current status, last updated date",
+        "Status badges use design colors: Draft #9CA3AF, In Review #F59E0B, Approved #10B981, Live #E07A5F",
+        "Empty state shown when no menus exist",
+        "New Menu button present (can be placeholder)",
+        "Background uses warm cream #FAF7F2, text uses deep brown #3D2E2E",
+        "bun run build passes without errors"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-004",
+      "title": "PDF Upload for Versions",
+      "description": "Upload PDF files to Vercel Blob when creating new versions",
+      "priority": 4,
+      "acceptanceCriteria": [
+        "app/menus/[id]/page.tsx shows menu detail with version list",
+        "app/menus/[id]/new-version/page.tsx - upload form with PDF input, change reason, summary",
+        "POST /api/menus/[id]/versions - creates version record, uploads PDF to Vercel Blob",
+        "lib/blob.ts - helper functions for Vercel Blob uploads",
+        "New version created with status 'draft'",
+        "PDF URL stored in version record",
+        "Redirects to menu detail page after successful upload",
+        "bun run build passes without errors"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-005",
+      "title": "Version Status Workflow",
+      "description": "Implement status transitions: Draft → In Review → Approved → Live",
+      "priority": 5,
+      "acceptanceCriteria": [
+        "POST /api/versions/[id]/status - changes version status with role checks",
+        "lib/permissions.ts - role-based permission checks for status transitions",
+        "Version cards show current status with appropriate action buttons",
+        "Admin can: Draft→In Review, In Review→Draft (reject), In Review→Approved, Approved→Live",
+        "Approver can: In Review→Approved only",
+        "Designer/Reviewer/Contributor: view only, no status changes",
+        "When version goes Live, previous Live version auto-archived",
+        "Activity log entry created on each status change",
+        "bun run build passes without errors"
+      ],
+      "passes": false
+    }
+  ]
+}
