@@ -49,7 +49,7 @@
         "Background uses warm cream #FAF7F2, text uses deep brown #3D2E2E",
         "bun run build passes without errors"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-004",
