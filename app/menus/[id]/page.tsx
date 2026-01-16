@@ -122,7 +122,7 @@ export default async function MenuDetailPage({ params }: MenuDetailPageProps) {
 
         <div>
           <h3 className="text-lg font-medium text-[#3D2E2E] mb-4">Versions</h3>
-          <VersionList versions={menu.versions} menuId={id} />
+          <VersionList versions={menu.versions} menuId={id} userRole={user.role} />
         </div>
       </div>
     </AppShell>

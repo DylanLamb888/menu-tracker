@@ -84,7 +84,7 @@
         "Activity log entry created on each status change",
         "bun run build passes without errors"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }
