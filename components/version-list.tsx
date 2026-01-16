@@ -68,21 +68,21 @@ export function VersionList({ versions, menuId, userRole }: VersionListProps) {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm font-medium text-[#3D2E2E]">
+                        <span className="font-mono text-sm font-medium text-[#3D2E2E] tabular-nums">
                           {version.versionLabel}
                         </span>
                         <StatusBadge status={version.status} />
                       </div>
-                      <p className="text-sm text-[#3D2E2E]/70 mt-1">
+                      <p className="text-sm text-[#3D2E2E]/70 mt-1 truncate max-w-xs">
                         {version.pdfFilename}
                       </p>
                       {version.reasonForChange && (
-                        <p className="text-sm text-[#3D2E2E]/70 mt-1">
+                        <p className="text-sm text-[#3D2E2E]/70 mt-1 line-clamp-2">
                           <span className="font-medium">Reason:</span> {version.reasonForChange}
                         </p>
                       )}
                       {version.changeSummary && (
-                        <p className="text-sm text-[#3D2E2E]/70 mt-1">
+                        <p className="text-sm text-[#3D2E2E]/70 mt-1 line-clamp-2">
                           <span className="font-medium">Summary:</span> {version.changeSummary}
                         </p>
                       )}

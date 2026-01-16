@@ -95,6 +95,8 @@ export default function NewVersionPage() {
                 </Label>
                 <Input
                   id="reason"
+                  name="reason"
+                  autoComplete="off"
                   value={reasonForChange}
                   onChange={(e) => setReasonForChange(e.target.value)}
                   placeholder="e.g., Seasonal menu update"
@@ -108,6 +110,8 @@ export default function NewVersionPage() {
                 </Label>
                 <Input
                   id="summary"
+                  name="summary"
+                  autoComplete="off"
                   value={changeSummary}
                   onChange={(e) => setChangeSummary(e.target.value)}
                   placeholder="e.g., Added 3 new dishes, updated pricing"
