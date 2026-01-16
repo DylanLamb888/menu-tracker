@@ -70,6 +70,7 @@ export function PdfUpload({ onFileSelect, selectedFile }: PdfUploadProps) {
             variant="ghost"
             size="sm"
             onClick={handleRemove}
+            aria-label="Remove file"
             className="text-[#3D2E2E]/50 hover:text-[#3D2E2E]"
           >
             <X className="h-4 w-4" />

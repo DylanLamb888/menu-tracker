@@ -84,9 +84,15 @@ export default async function DashboardPage() {
               <FileText className="h-8 w-8 text-[#E07A5F]" />
             </div>
             <h3 className="text-lg font-medium text-[#3D2E2E]">No menus yet</h3>
-            <p className="text-sm text-[#3D2E2E]/70 mt-1 max-w-sm">
+            <p className="text-sm text-[#3D2E2E]/70 mt-1 max-w-sm text-pretty">
               Get started by creating your first menu to begin tracking versions.
             </p>
+            {user.role === "admin" && (
+              <Button className="mt-4 bg-[#E07A5F] hover:bg-[#E07A5F]/90 text-white">
+                <Plus className="h-4 w-4 mr-2" />
+                New Menu
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -20,7 +20,7 @@ export function MenuCard({ id, name, category, currentStatus, updatedAt }: MenuC
 
   return (
     <Link href={`/menus/${id}`}>
-      <Card className="h-full transition-shadow hover:shadow-md cursor-pointer border-[#3D2E2E]/10">
+      <Card className="h-full hover:shadow-md cursor-pointer border-[#3D2E2E]/10">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2">

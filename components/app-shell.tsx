@@ -19,8 +19,8 @@ export function AppShell({ children, userName }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2]">
-      <header className="sticky top-0 z-10 border-b border-[#3D2E2E]/10 bg-white">
+    <div className="min-h-dvh bg-[#FAF7F2]">
+      <header className="sticky top-0 z-40 border-b border-[#3D2E2E]/10 bg-white">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <Menu className="h-6 w-6 text-[#E07A5F]" />
