@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserManagement } from "@/components/user-management";
+import { CategoryManagement } from "@/components/category-management";
 import { Users, FolderTree, Tag } from "lucide-react";
 
 export default async function SettingsPage() {
@@ -59,12 +60,7 @@ export default async function SettingsPage() {
 
           <TabsContent value="categories" className="mt-6">
             <div className="rounded-lg border border-[#3D2E2E]/10 bg-white p-6">
-              <h3 className="text-lg font-medium text-[#3D2E2E] mb-4">
-                Category Management
-              </h3>
-              <p className="text-sm text-[#3D2E2E]/70">
-                Category management coming soon...
-              </p>
+              <CategoryManagement />
             </div>
           </TabsContent>
 

@@ -34,7 +34,7 @@
       "title": "Category Management",
       "description": "Admin can add, edit, reorder, and delete menu categories.",
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "List all categories with sort order",
         "Add new category",

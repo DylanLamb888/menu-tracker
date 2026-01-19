@@ -208,3 +208,10 @@ All collaboration features implemented:
 - Created `components/user-management.tsx` - full user list with dialogs
 - Features: List all users with name/role/status, Add new user form, Edit user, Reset password, Deactivate/reactivate toggle
 - Admin cannot deactivate their own account (safety check)
+
+**US-017: Category Management** - COMPLETE
+- Extended `app/api/categories/route.ts` with POST (create category) and sortOrder
+- Created `app/api/categories/[id]/route.ts` with PATCH (update) and DELETE
+- Created `app/api/categories/reorder/route.ts` for batch sort order updates
+- Created `components/category-management.tsx` with drag-to-reorder
+- Delete blocked if category is in use by menus
