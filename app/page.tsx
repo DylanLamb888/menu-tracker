@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
-import { db, menus, versions, categories } from "@/lib/db";
-import { eq, desc, sql } from "drizzle-orm";
+import { db, menus, versions, categories, menuTags, tags } from "@/lib/db";
+import { eq, desc, sql, inArray } from "drizzle-orm";
 import { AppShell } from "@/components/app-shell";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,29 @@ async function getMenusWithDetails(currentUserId: string) {
     .where(eq(menus.isArchived, false))
     .orderBy(desc(menus.updatedAt));
 
+  // Batch fetch tags for all menus
+  const menuIds = result.map((m) => m.id);
+  const menuTagsMap = new Map<string, { id: string; name: string; colour: string }[]>();
+
+  if (menuIds.length > 0) {
+    const tagResults = await db
+      .select({
+        menuId: menuTags.menuId,
+        tagId: tags.id,
+        tagName: tags.name,
+        tagColour: tags.colour,
+      })
+      .from(menuTags)
+      .innerJoin(tags, eq(menuTags.tagId, tags.id))
+      .where(inArray(menuTags.menuId, menuIds));
+
+    tagResults.forEach((row) => {
+      const existing = menuTagsMap.get(row.menuId) || [];
+      existing.push({ id: row.tagId, name: row.tagName, colour: row.tagColour });
+      menuTagsMap.set(row.menuId, existing);
+    });
+  }
+
   return result.map((menu) => ({
     id: menu.id,
     name: menu.name,
@@ -44,6 +67,7 @@ async function getMenusWithDetails(currentUserId: string) {
     currentStatus: menu.latestStatus as "draft" | "in_review" | "approved" | "live" | "archived" | null,
     updatedAt: menu.updatedAt,
     needsAttention: menu.hasAssignedVersion,
+    tags: menuTagsMap.get(menu.id) || [],
   }));
 }
 

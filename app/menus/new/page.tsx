@@ -15,28 +15,51 @@ interface Category {
   name: string;
 }
 
+interface Tag {
+  id: string;
+  name: string;
+  colour: string;
+}
+
 export default function NewMenuPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    async function fetchCategories() {
+    async function fetchData() {
       try {
-        const response = await fetch("/api/categories");
-        if (response.ok) {
-          const data = await response.json();
+        const [categoriesRes, tagsRes] = await Promise.all([
+          fetch("/api/categories"),
+          fetch("/api/tags"),
+        ]);
+        if (categoriesRes.ok) {
+          const data = await categoriesRes.json();
           setCategories(data.categories);
         }
+        if (tagsRes.ok) {
+          const data = await tagsRes.json();
+          setTags(data.tags);
+        }
       } catch {
-        // Categories are optional, continue without them
+        // Optional data, continue without them
       }
     }
-    fetchCategories();
+    fetchData();
   }, []);
+
+  function toggleTag(tagId: string) {
+    setSelectedTagIds((prev) =>
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId]
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -56,6 +79,7 @@ export default function NewMenuPage() {
         body: JSON.stringify({
           name: name.trim(),
           categoryId: categoryId || null,
+          tagIds: selectedTagIds.length > 0 ? selectedTagIds : null,
         }),
       });
 
@@ -135,6 +159,36 @@ export default function NewMenuPage() {
                       </option>
                     ))}
                   </select>
+                </div>
+              )}
+
+              {tags.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-[#3D2E2E]">Tags</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag) => (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => toggleTag(tag.id)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                          selectedTagIds.includes(tag.id)
+                            ? "ring-2 ring-offset-1 ring-[#3D2E2E]"
+                            : "opacity-60 hover:opacity-100"
+                        }`}
+                        style={{
+                          backgroundColor: tag.colour + "20",
+                          color: tag.colour,
+                        }}
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: tag.colour }}
+                        />
+                        {tag.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 

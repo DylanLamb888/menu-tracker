@@ -4,6 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/status-badge";
 import { FileText, AlertCircle } from "lucide-react";
 
+interface Tag {
+  id: string;
+  name: string;
+  colour: string;
+}
+
 interface MenuCardProps {
   id: string;
   name: string;
@@ -11,9 +17,10 @@ interface MenuCardProps {
   currentStatus: "draft" | "in_review" | "approved" | "live" | "archived" | null;
   updatedAt: Date;
   needsAttention?: boolean;
+  tags?: Tag[];
 }
 
-export function MenuCard({ id, name, category, currentStatus, updatedAt, needsAttention }: MenuCardProps) {
+export function MenuCard({ id, name, category, currentStatus, updatedAt, needsAttention, tags }: MenuCardProps) {
   const formattedDate = new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: "short",
@@ -43,8 +50,28 @@ export function MenuCard({ id, name, category, currentStatus, updatedAt, needsAt
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-1 text-sm text-[#3D2E2E]/70">
+          <div className="flex flex-col gap-2 text-sm text-[#3D2E2E]/70">
             {category && <p>{category}</p>}
+            {tags && tags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {tags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                    style={{
+                      backgroundColor: tag.colour + "20",
+                      color: tag.colour,
+                    }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: tag.colour }}
+                    />
+                    {tag.name}
+                  </span>
+                ))}
+              </div>
+            )}
             <p>Updated {formattedDate}</p>
           </div>
         </CardContent>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { db, menus, versions, categories } from "@/lib/db";
-import { eq, desc, sql } from "drizzle-orm";
+import { db, menus, versions, categories, menuTags, tags } from "@/lib/db";
+import { eq, desc, sql, inArray } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 
 export async function GET() {
@@ -29,12 +29,36 @@ export async function GET() {
     .where(eq(menus.isArchived, false))
     .orderBy(desc(menus.updatedAt));
 
+  // Batch fetch tags for all menus
+  const menuIds = result.map((m) => m.id);
+  const menuTagsMap = new Map<string, { id: string; name: string; colour: string }[]>();
+
+  if (menuIds.length > 0) {
+    const tagResults = await db
+      .select({
+        menuId: menuTags.menuId,
+        tagId: tags.id,
+        tagName: tags.name,
+        tagColour: tags.colour,
+      })
+      .from(menuTags)
+      .innerJoin(tags, eq(menuTags.tagId, tags.id))
+      .where(inArray(menuTags.menuId, menuIds));
+
+    tagResults.forEach((row) => {
+      const existing = menuTagsMap.get(row.menuId) || [];
+      existing.push({ id: row.tagId, name: row.tagName, colour: row.tagColour });
+      menuTagsMap.set(row.menuId, existing);
+    });
+  }
+
   const menusWithDetails = result.map((menu) => ({
     id: menu.id,
     name: menu.name,
     category: menu.categoryName,
     currentStatus: menu.latestStatus,
     updatedAt: menu.updatedAt,
+    tags: menuTagsMap.get(menu.id) || [],
   }));
 
   return NextResponse.json({ menus: menusWithDetails });
@@ -52,7 +76,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { name, categoryId } = await request.json();
+    const { name, categoryId, tagIds } = await request.json();
 
     if (!name || typeof name !== "string") {
       return NextResponse.json(
@@ -69,6 +93,16 @@ export async function POST(request: Request) {
         createdBy: user.id,
       })
       .returning();
+
+    // Insert tags if provided
+    if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
+      await db.insert(menuTags).values(
+        tagIds.map((tagId: string) => ({
+          menuId: newMenu.id,
+          tagId,
+        }))
+      );
+    }
 
     return NextResponse.json({ menu: newMenu }, { status: 201 });
   } catch (error) {

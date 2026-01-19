@@ -9,6 +9,12 @@ import { Plus, FileText, Search, X } from "lucide-react";
 
 type VersionStatus = "draft" | "in_review" | "approved" | "live" | "archived" | null;
 
+interface Tag {
+  id: string;
+  name: string;
+  colour: string;
+}
+
 interface Menu {
   id: string;
   name: string;
@@ -16,6 +22,7 @@ interface Menu {
   currentStatus: VersionStatus;
   updatedAt: Date;
   needsAttention: boolean;
+  tags: Tag[];
 }
 
 interface DashboardFiltersProps {
@@ -175,6 +182,7 @@ export function DashboardFilters({ menus, categories, isAdmin }: DashboardFilter
                 currentStatus={menu.currentStatus}
                 updatedAt={menu.updatedAt}
                 needsAttention={menu.needsAttention}
+                tags={menu.tags}
               />
             ))}
           </div>
