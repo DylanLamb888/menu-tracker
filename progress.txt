@@ -215,3 +215,9 @@ All collaboration features implemented:
 - Created `app/api/categories/reorder/route.ts` for batch sort order updates
 - Created `components/category-management.tsx` with drag-to-reorder
 - Delete blocked if category is in use by menus
+
+**US-018: Tag Management** - COMPLETE
+- Created `app/api/tags/route.ts` with GET and POST
+- Created `app/api/tags/[id]/route.ts` with PATCH and DELETE
+- Created `components/tag-management.tsx` with color picker (8 presets + custom)
+- Delete blocked if tag is in use by menus

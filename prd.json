@@ -48,7 +48,7 @@
       "title": "Tag Management",
       "description": "Admin can add, edit, and delete menu tags with colors.",
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "List all tags with color preview",
         "Add new tag with name and color picker",
