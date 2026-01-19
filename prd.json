@@ -61,7 +61,7 @@
       "title": "Export Menu History",
       "description": "Export version history for a menu as CSV.",
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Export button on menu detail page",
         "CSV includes: version label, status, date, uploader, reason, summary",

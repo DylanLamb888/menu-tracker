@@ -221,3 +221,9 @@ All collaboration features implemented:
 - Created `app/api/tags/[id]/route.ts` with PATCH and DELETE
 - Created `components/tag-management.tsx` with color picker (8 presets + custom)
 - Delete blocked if tag is in use by menus
+
+**US-019: Export Menu History** - COMPLETE
+- Created `app/api/menus/[id]/export/route.ts` for CSV generation
+- CSV includes: version label, status, date, uploader, reason, summary
+- Added Export button next to New Version on menu detail page
+- Filename format: `{menu_name}_history_{date}.csv`

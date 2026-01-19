@@ -6,7 +6,7 @@ import { eq, desc, inArray } from "drizzle-orm";
 import { AppShell } from "@/components/app-shell";
 import { VersionViews } from "@/components/version-views";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Download } from "lucide-react";
 
 interface MenuDetailPageProps {
   params: Promise<{ id: string }>;
@@ -133,12 +133,23 @@ export default async function MenuDetailPage({ params }: MenuDetailPageProps) {
               <p className="text-sm text-[#3D2E2E]/70 mt-1">{menu.category}</p>
             )}
           </div>
-          <Link href={`/menus/${id}/new-version`}>
-            <Button className="bg-[#E07A5F] hover:bg-[#E07A5F]/90 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              New Version
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <a href={`/api/menus/${id}/export`} download>
+              <Button
+                variant="outline"
+                className="border-[#3D2E2E]/20 text-[#3D2E2E]/70 hover:text-[#3D2E2E]"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </a>
+            <Link href={`/menus/${id}/new-version`}>
+              <Button className="bg-[#E07A5F] hover:bg-[#E07A5F]/90 text-white">
+                <Plus className="h-4 w-4 mr-2" />
+                New Version
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <VersionViews
