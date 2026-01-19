@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu, Activity } from "lucide-react";
+import { LogOut, Menu, Activity, Settings } from "lucide-react";
 
 interface AppShellProps {
   children: React.ReactNode;
   userName?: string;
+  userRole?: string;
 }
 
-export function AppShell({ children, userName }: AppShellProps) {
+export function AppShell({ children, userName, userRole }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -59,6 +60,22 @@ export function AppShell({ children, userName }: AppShellProps) {
                   Activity
                 </Button>
               </Link>
+              {userRole === "admin" && (
+                <Link href="/settings">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`${
+                      pathname === "/settings"
+                        ? "text-[#E07A5F] bg-[#E07A5F]/10"
+                        : "text-[#3D2E2E]/70 hover:text-[#3D2E2E] hover:bg-[#3D2E2E]/5"
+                    }`}
+                  >
+                    <Settings className="h-4 w-4 mr-1.5" />
+                    Settings
+                  </Button>
+                </Link>
+              )}
             </nav>
           </div>
           <div className="flex items-center gap-4">

@@ -111,7 +111,7 @@ export default async function MenuDetailPage({ params }: MenuDetailPageProps) {
   }
 
   return (
-    <AppShell userName={user.name}>
+    <AppShell userName={user.name} userRole={user.role}>
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Link href="/">

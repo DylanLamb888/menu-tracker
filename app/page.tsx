@@ -69,7 +69,7 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <AppShell userName={user.name}>
+    <AppShell userName={user.name} userRole={user.role}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>

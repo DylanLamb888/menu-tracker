@@ -117,7 +117,7 @@ export default async function VersionDetailPage({
   }).format(new Date(version.createdAt));
 
   return (
-    <AppShell userName={user.name}>
+    <AppShell userName={user.name} userRole={user.role}>
       <div className="space-y-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-[#3D2E2E]/70">

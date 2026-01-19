@@ -189,3 +189,15 @@ All collaboration features implemented:
 **Phase 1 (MVP):** Authentication, Dashboard, Menu CRUD, PDF Upload, Status Workflow
 **Phase 2 (Version Management):** PDF Viewer, Assignments, Item Changes, Version Tree, Branching
 **Phase 3 (Collaboration):** Comments, @Mentions, Activity Log, Search & Filter
+**Phase 4 (Settings & Polish):** Admin Settings, User/Category/Tag Management, Export Features
+
+---
+
+### 2026-01-19: Phase 4 - Settings & Polish Started
+
+**US-015: Admin Settings Page** - COMPLETE
+- Created `app/settings/page.tsx` with admin-only access (redirects non-admins to dashboard)
+- Settings page has three tabs: Users, Categories, Tags (placeholder content)
+- Added `userRole` prop to `AppShell` component
+- Added Settings nav link in header (only visible to admin users)
+- Updated server-side pages to pass `userRole` to AppShell
