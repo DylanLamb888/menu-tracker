@@ -2,89 +2,197 @@
   "name": "Menu Version Control MVP",
   "branchName": "ralph/mvp-foundation",
   "description": "Foundation for the LMA Menu Version Control System",
+  "phases": {
+    "phase1": "Core Foundation (US-001 to US-005) - COMPLETE",
+    "phase2": "Enhanced UX (US-006 to US-010) - COMPLETE",
+    "phase3": "Collaboration (US-011 to US-014) - COMPLETE",
+    "phase4": "Admin & Export (US-015 to US-020) - COMPLETE",
+    "phase5": "Annotations & Polish (US-021 to US-024) - IN PROGRESS"
+  },
   "userStories": [
     {
       "id": "US-001",
       "title": "Database Schema Setup",
-      "description": "Set up Vercel Postgres with Drizzle ORM and create initial schema",
-      "priority": 1,
-      "acceptanceCriteria": [
-        "Drizzle ORM configured with Vercel Postgres",
-        "User, Menu, Version, Comment tables created",
-        "Migrations run successfully"
-      ],
+      "phase": 1,
       "passes": true
     },
     {
       "id": "US-002",
       "title": "Simple Password Authentication",
-      "description": "Implement password-based auth where each user has a unique password",
-      "priority": 2,
-      "acceptanceCriteria": [
-        "Login page at /login with single password input field",
-        "POST /api/auth/login - validates password, returns user, sets session cookie",
-        "POST /api/auth/logout - clears session cookie",
-        "GET /api/auth/me - returns current user data or 401",
-        "lib/auth.ts - session helpers using jose for JWT (encrypt/decrypt cookie)",
-        "middleware.ts - protects all routes except /login and /api/auth/*",
-        "Session cookie is HTTP-only with 30-day expiry",
-        "Invalid password returns appropriate error message",
-        "bun run build passes without errors"
-      ],
+      "phase": 1,
       "passes": true
     },
     {
       "id": "US-003",
       "title": "Dashboard Menu List",
-      "description": "Display all menus with current status on dashboard",
-      "priority": 3,
-      "acceptanceCriteria": [
-        "app/page.tsx shows dashboard (replaces Next.js boilerplate)",
-        "app/layout.tsx includes app shell with navigation header",
-        "GET /api/menus returns array of menus with their current version status",
-        "Menu cards display: name, category, current status, last updated date",
-        "Status badges use design colors: Draft #9CA3AF, In Review #F59E0B, Approved #10B981, Live #E07A5F",
-        "Empty state shown when no menus exist",
-        "New Menu button present (can be placeholder)",
-        "Background uses warm cream #FAF7F2, text uses deep brown #3D2E2E",
-        "bun run build passes without errors"
-      ],
+      "phase": 1,
       "passes": true
     },
     {
       "id": "US-004",
       "title": "PDF Upload for Versions",
-      "description": "Upload PDF files to Vercel Blob when creating new versions",
-      "priority": 4,
-      "acceptanceCriteria": [
-        "app/menus/[id]/page.tsx shows menu detail with version list",
-        "app/menus/[id]/new-version/page.tsx - upload form with PDF input, change reason, summary",
-        "POST /api/menus/[id]/versions - creates version record, uploads PDF to Vercel Blob",
-        "lib/blob.ts - helper functions for Vercel Blob uploads",
-        "New version created with status 'draft'",
-        "PDF URL stored in version record",
-        "Redirects to menu detail page after successful upload",
-        "bun run build passes without errors"
-      ],
+      "phase": 1,
       "passes": true
     },
     {
       "id": "US-005",
       "title": "Version Status Workflow",
-      "description": "Implement status transitions: Draft → In Review → Approved → Live",
-      "priority": 5,
+      "phase": 1,
+      "passes": true
+    },
+    {
+      "id": "US-006",
+      "title": "Version Detail Page with PDF Viewer",
+      "phase": 2,
+      "passes": true
+    },
+    {
+      "id": "US-007",
+      "title": "Version Timeline/Tree View",
+      "phase": 2,
+      "passes": true
+    },
+    {
+      "id": "US-008",
+      "title": "Dashboard Search and Filters",
+      "phase": 2,
+      "passes": true
+    },
+    {
+      "id": "US-009",
+      "title": "Create New Menu Flow",
+      "phase": 2,
+      "passes": true
+    },
+    {
+      "id": "US-010",
+      "title": "Version Assignment",
+      "phase": 2,
+      "passes": true
+    },
+    {
+      "id": "US-011",
+      "title": "Comments on Versions",
+      "phase": 3,
+      "passes": true
+    },
+    {
+      "id": "US-012",
+      "title": "Activity Log Page",
+      "phase": 3,
+      "passes": true
+    },
+    {
+      "id": "US-013",
+      "title": "Dashboard Needs Attention Badge",
+      "phase": 3,
+      "passes": true
+    },
+    {
+      "id": "US-014",
+      "title": "Inline PDF Viewer",
+      "phase": 3,
+      "passes": true
+    },
+    {
+      "id": "US-015",
+      "title": "Admin Settings Page",
+      "phase": 4,
+      "passes": true
+    },
+    {
+      "id": "US-016",
+      "title": "User Management",
+      "phase": 4,
+      "passes": true
+    },
+    {
+      "id": "US-017",
+      "title": "Category Management",
+      "phase": 4,
+      "passes": true
+    },
+    {
+      "id": "US-018",
+      "title": "Tag Management",
+      "phase": 4,
+      "passes": true
+    },
+    {
+      "id": "US-019",
+      "title": "Export Menu History",
+      "phase": 4,
+      "passes": true
+    },
+    {
+      "id": "US-020",
+      "title": "Export Activity Log",
+      "phase": 4,
+      "passes": true
+    },
+    {
+      "id": "US-021",
+      "title": "PDF Canvas Annotation System",
+      "phase": 5,
+      "priority": 1,
+      "description": "Allow users to draw annotations directly on PDF pages with freehand pen, text, checkmarks, and highlights",
       "acceptanceCriteria": [
-        "POST /api/versions/[id]/status - changes version status with role checks",
-        "lib/permissions.ts - role-based permission checks for status transitions",
-        "Version cards show current status with appropriate action buttons",
-        "Admin can: Draft→In Review, In Review→Draft (reject), In Review→Approved, Approved→Live",
-        "Approver can: In Review→Approved only",
-        "Designer/Reviewer/Contributor: view only, no status changes",
-        "When version goes Live, previous Live version auto-archived",
-        "Activity log entry created on each status change",
+        "Canvas overlay on PDF viewer captures drawing input",
+        "Drawing tools: pen (freehand), text, checkmark stamp, highlight",
+        "Annotations stored as vector data in database (new annotations table)",
+        "Annotations render on top of PDF at correct positions",
+        "Annotations linked to specific version and page number",
+        "Support for different colors (at minimum: red, blue, black)",
+        "Clear/undo functionality for annotations",
         "bun run build passes without errors"
       ],
-      "passes": true
+      "context": "Raffy (designer) needs visual markup like checkmarks, strikethroughs, and text notes directly on menu PDFs. See wine list example with year/price changes marked up.",
+      "passes": false
+    },
+    {
+      "id": "US-022",
+      "title": "Edit Tags on Existing Menus",
+      "phase": 5,
+      "priority": 2,
+      "description": "Allow editing tags on menus after creation",
+      "acceptanceCriteria": [
+        "Menu detail page shows current tags",
+        "Edit button opens tag selection dialog",
+        "Can add/remove tags from existing menus",
+        "PATCH /api/menus/[id] endpoint supports tagIds update",
+        "bun run build passes without errors"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-023",
+      "title": "Tag Filtering on Dashboard",
+      "phase": 5,
+      "priority": 3,
+      "description": "Filter menus by tag on the dashboard",
+      "acceptanceCriteria": [
+        "Tag filter dropdown on dashboard",
+        "Selecting tag filters menu list",
+        "Can combine with existing category/status filters",
+        "bun run build passes without errors"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-024",
+      "title": "Mobile Responsive Polish",
+      "phase": 5,
+      "priority": 4,
+      "description": "Ensure all pages work well on mobile devices",
+      "acceptanceCriteria": [
+        "Dashboard grid collapses to single column on mobile",
+        "Navigation works on mobile (hamburger menu or similar)",
+        "PDF viewer is usable on mobile",
+        "Forms are touch-friendly",
+        "Settings tabs work on mobile",
+        "bun run build passes without errors"
+      ],
+      "passes": false
     }
   ]
 }

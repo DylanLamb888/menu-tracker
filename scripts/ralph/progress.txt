@@ -1,5 +1,6 @@
 # Ralph Progress Log
 Started: 2026-01-16
+
 ---
 
 ## Codebase Patterns
@@ -14,22 +15,146 @@ Started: 2026-01-16
 - Migrations: `bun run db:generate` to generate, `bun run db:push` to push to DB
 - DB scripts use `dotenv-cli` to load `.env.local` automatically
 - Need `POSTGRES_URL` alias in `.env.local` pointing to `menutrackerdb_POSTGRES_URL`
+- API routes: Use `getCurrentUser()` from `@/lib/auth` to check auth
+- Role checks: Compare `user.role` against allowed roles
+- CSV export: Use `escapeCSV()` helper for proper quoting
+- Tags: Junction table `menuTags` links menus to tags, batch fetch to avoid N+1
+- Settings page: Admin-only, tabs for Users/Categories/Tags at `/settings`
 
 ---
 
-## 2026-01-16 - US-001
+## Phase 1 Summary (US-001 to US-005) - COMPLETE
 
-- Implemented database schema with Drizzle ORM
-- Files created:
-  - `lib/db/schema.ts` - All table definitions and types
-  - `lib/db/index.ts` - Database connection export
-  - `drizzle.config.ts` - Drizzle Kit configuration
-  - `drizzle/0000_*.sql` - Initial migration
-  - `.env.local.example` - Example environment variables
-- **Learnings for future iterations:**
-  - Drizzle uses `pgEnum()` for PostgreSQL enums
-  - Use `$inferSelect` and `$inferInsert` for TypeScript types
-  - Vercel Postgres requires `POSTGRES_URL` env var
-  - .gitignore had `.env*` pattern, added `!.env*.example` exception
+Core foundation: Database schema, authentication, dashboard, PDF upload, status workflow.
+
+---
+
+## Phase 2 Summary (US-006 to US-010) - COMPLETE
+
+Enhanced UX: Version detail page, timeline view, search/filters, create menu flow, version assignment.
+
+---
+
+## Phase 3 Summary (US-011 to US-014) - COMPLETE
+
+Collaboration: Comments on versions, activity log, needs attention badges, inline PDF viewer.
+
+---
+
+## Phase 4 Summary (US-015 to US-020) - COMPLETE
+
+Admin & Export features implemented 2026-01-19.
+
+### US-015: Admin Settings Page
+- Created `/app/settings/page.tsx` with tabs (Users, Categories, Tags)
+- Added `userRole` prop to AppShell for conditional Settings nav link
+- Admin-only access with redirect for non-admins
+
+### US-016: User Management
+- Extended `/api/users` with POST for creating users
+- Created `/api/users/[id]` with PATCH for edit/reset password/deactivate
+- Created `components/user-management.tsx` with dialogs for all actions
+
+### US-017: Category Management
+- Extended `/api/categories` with POST
+- Created `/api/categories/[id]` with PATCH/DELETE
+- Created `/api/categories/reorder` for drag-to-reorder
+- Created `components/category-management.tsx` with drag-and-drop
+
+### US-018: Tag Management
+- Created `/api/tags` with GET/POST
+- Created `/api/tags/[id]` with PATCH/DELETE (delete checks if in use)
+- Created `components/tag-management.tsx` with 8-color picker + custom hex input
+
+### US-019: Export Menu History
+- Created `/api/menus/[id]/export` returning CSV
+- Added Export button to menu detail page
+- CSV includes all versions with status, dates, creator, changes
+
+### US-020: Export Activity Log
+- Created `/api/activity/export` returning CSV
+- Respects current filter via `?action=` query param
+- Added Export button to activity page
+
+**Files created in Phase 4:**
+- `app/settings/page.tsx`
+- `app/api/users/[id]/route.ts`
+- `app/api/categories/[id]/route.ts`
+- `app/api/categories/reorder/route.ts`
+- `app/api/tags/route.ts`
+- `app/api/tags/[id]/route.ts`
+- `app/api/menus/[id]/export/route.ts`
+- `app/api/activity/export/route.ts`
+- `components/user-management.tsx`
+- `components/category-management.tsx`
+- `components/tag-management.tsx`
+- `components/ui/tabs.tsx`
+- `components/ui/dialog.tsx`
+
+---
+
+## 2026-01-19 - Tags on Menus Feature
+
+Added ability to assign tags to menus (not part of original PRD, added as enhancement).
+
+**What was implemented:**
+- GET /api/menus now returns tags for each menu (batch fetched)
+- POST /api/menus accepts `tagIds` array to assign tags at creation
+- New menu form shows tag selection with colored pill buttons
+- Dashboard menu cards display tags with matching colors
+- Dashboard page fetches and passes tags to cards
+
+**Files modified:**
+- `app/api/menus/route.ts` - Added menuTags/tags imports, batch fetch tags in GET, insert tags in POST
+- `app/menus/new/page.tsx` - Added Tag interface, state, fetch, toggleTag function, tag buttons UI
+- `app/page.tsx` - Added batch tag fetching, pass tags to DashboardFilters
+- `components/dashboard-filters.tsx` - Added Tag interface to Menu type, pass tags to MenuCard
+- `components/menu-card.tsx` - Added Tag interface, tags prop, tag badge rendering
+
+**Learnings:**
+- Use `inArray()` from drizzle-orm for batch queries
+- Batch fetch related data after main query to avoid N+1
+- Tag colors stored as hex, render with `backgroundColor: color + "20"` for transparent bg
+
+---
+
+## Phase 5 Planning (US-021 to US-024) - NEXT
+
+### US-021: PDF Canvas Annotation System (PRIORITY)
+Raffy needs visual markup on PDFs - checkmarks, strikethroughs, text notes, year/price changes.
+
+**Reference:** User shared wine list PDF with manual markup showing:
+- ✓ checkmarks for approved items
+- Strikethrough old values + new values (2023 → 2024, £16 → £15)
+- "to be removed" text annotations
+- Highlight boxes around changes
+- Bracket grouping for related items
+
+**Implementation approach:**
+1. Create `annotations` table in schema (versionId, pageNumber, type, data JSON, createdBy)
+2. Canvas overlay component on PDF viewer
+3. Drawing tools: pen, text, checkmark stamp, highlight
+4. Store annotations as vector data (paths, positions, colors)
+5. Render annotations on top of PDF
+6. API: GET/POST /api/versions/[id]/annotations
+
+### US-022: Edit Tags on Existing Menus
+- Menu detail page shows tags, edit button opens dialog
+- PATCH /api/menus/[id] to update tags
+
+### US-023: Tag Filtering on Dashboard
+- Add tag filter dropdown to dashboard filters
+
+### US-024: Mobile Responsive Polish
+- Test and fix all pages on mobile viewports
+
+---
+
+## Test Users (from seed.ts)
+
+- Dylan (admin) - password: "dylan"
+- Raffy (designer) - password: "raffy"
+- Ludo (approver) - password: "ludo"
+- Amélie (reviewer) - password: "amelie"
 
 ---

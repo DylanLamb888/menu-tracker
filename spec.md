@@ -1,188 +1,165 @@
-# Menu Tracker MVP Implementation Spec
+# Menu Tracker Implementation Spec
 
 ## Overview
 
-Building the foundation for LMA Menu Version Control System. This spec covers the MVP phase (5 user stories) that establishes auth, dashboard, and core version workflow.
+Menu version control system for La Maison Ani London restaurant. This spec tracks implementation progress across all phases.
 
-## Current State
+## Current State (as of 2026-01-19)
 
-- ✅ Database schema complete (`lib/db/schema.ts`) - 12 tables, all types exported
-- ✅ Drizzle ORM configured with Vercel Postgres
-- ✅ Ralph automation infrastructure ready
-- ❌ No UI components (still Create Next App boilerplate)
-- ❌ No API routes
-- ❌ Missing dependencies: shadcn/ui, bcrypt, @vercel/blob
+### Completed Phases
 
-## Architecture Decisions
+| Phase | Stories | Status |
+|-------|---------|--------|
+| Phase 1 | US-001 to US-005 | ✅ Complete |
+| Phase 2 | US-006 to US-010 | ✅ Complete |
+| Phase 3 | US-011 to US-014 | ✅ Complete |
+| Phase 4 | US-015 to US-020 | ✅ Complete |
+| Phase 5 | US-021 to US-024 | 🔄 In Progress |
 
-### Authentication
-- **Method**: Password-only (each user has unique password that identifies them)
-- **Flow**: User enters password → lookup in DB → if found, create session
-- **Session**: HTTP-only cookie, 30-day expiry
-- **Security**: Passwords hashed with bcrypt (NFR-SEC-02)
+### What's Built
 
-### Tech Stack
-- **ORM**: Drizzle with Vercel Postgres
-- **UI**: shadcn/ui (new-york style) with Tailwind CSS 4
-- **File Storage**: Vercel Blob for PDFs
-- **Auth**: Custom middleware with encrypted cookies
+- ✅ Database schema (Drizzle ORM + Vercel Postgres)
+- ✅ Password-based authentication with JWT sessions
+- ✅ Dashboard with menu cards, search, filters
+- ✅ PDF upload to Vercel Blob
+- ✅ Version status workflow (Draft → In Review → Approved → Live)
+- ✅ Version detail page with inline PDF viewer
+- ✅ Version timeline/tree view
+- ✅ Comments on versions (with categories)
+- ✅ Activity log with filters and export
+- ✅ Admin settings (users, categories, tags management)
+- ✅ CSV exports for menu history and activity
+- ✅ Tags on menus (assign at creation, display on cards)
 
-## Pre-Implementation Setup
+## Phase 5: Annotations & Polish
 
-Before starting stories, install missing dependencies:
+### US-021: PDF Canvas Annotation System (PRIORITY)
 
-```bash
-# UI components
-bunx shadcn@latest add button card badge input label
+**User Need:** Raffy (designer) marks up menu PDFs with visual annotations - checkmarks, strikethroughs, text notes, year/price corrections. Currently does this on paper or in Preview.app.
 
-# Auth & security
-bun add bcryptjs
-bun add -d @types/bcryptjs
+**Reference:** Wine list PDF with manual markup showing:
+- ✓ Blue checkmarks for approved items
+- Strikethrough old values with new values nearby (2023 → 2024)
+- "to be removed" text annotations
+- Highlight boxes around changes
+- Bracket grouping for related items
 
-# File storage (for US-004)
-bun add @vercel/blob
+**Technical Approach:**
+
+1. **Database Schema**
+```sql
+CREATE TABLE annotations (
+  id UUID PRIMARY KEY,
+  version_id UUID REFERENCES versions(id),
+  page_number INTEGER NOT NULL,
+  type VARCHAR(20) NOT NULL,  -- 'pen', 'text', 'checkmark', 'highlight'
+  data JSONB NOT NULL,        -- {paths, position, color, text, etc}
+  created_by UUID REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT NOW()
+);
 ```
 
-## MVP User Stories
+2. **Canvas Overlay**
+- Add `<canvas>` on top of PDF in `components/pdf-viewer.tsx`
+- Canvas matches PDF dimensions, positioned absolutely
+- Capture mouse/touch events for drawing
 
-### US-001: Database Schema Setup ✅ COMPLETE
+3. **Drawing Tools**
+- Pen: Freehand paths, variable colors
+- Text: Click to place, type text
+- Checkmark: Stamp at click position
+- Highlight: Rectangle with transparent fill
 
-### US-002: Simple Password Authentication
+4. **Data Format** (JSON in `data` column)
+```typescript
+// Pen stroke
+{ type: 'pen', color: '#0000FF', paths: [[x1,y1], [x2,y2], ...] }
 
-**Files to create/modify:**
-- `app/login/page.tsx` - Login page with password input
-- `app/api/auth/login/route.ts` - POST endpoint for login
-- `app/api/auth/logout/route.ts` - POST endpoint for logout
-- `app/api/auth/me/route.ts` - GET current user
-- `lib/auth.ts` - Session helpers (encrypt/decrypt cookie, getCurrentUser)
-- `middleware.ts` - Protect routes, redirect unauthenticated users
+// Text annotation
+{ type: 'text', color: '#FF0000', position: {x, y}, text: 'to be removed' }
 
-**Acceptance criteria:**
-- [ ] Login page with single password field
-- [ ] Password lookup returns user or error
-- [ ] Session cookie set on successful login (30-day expiry)
-- [ ] Protected routes redirect to /login if no session
-- [ ] `/api/auth/me` returns current user data
-- [ ] Logout clears session
+// Checkmark
+{ type: 'checkmark', color: '#0000FF', position: {x, y} }
 
-**Implementation notes:**
-- Use `jose` for JWT in cookie (lightweight, edge-compatible)
-- Middleware checks cookie on all routes except /login and /api/auth/*
-- Seed script to create initial users with hashed passwords
-
-### US-003: Dashboard Menu List
-
-**Files to create/modify:**
-- `app/page.tsx` - Replace boilerplate with dashboard
-- `app/layout.tsx` - Add app shell (sidebar, header)
-- `components/menu-card.tsx` - Card displaying menu info
-- `components/status-badge.tsx` - Colored status badges
-- `components/app-shell.tsx` - Layout wrapper with navigation
-- `app/api/menus/route.ts` - GET all menus, POST create menu
-
-**Acceptance criteria:**
-- [ ] Dashboard shows grid of menu cards
-- [ ] Each card shows: name, category, current status, last updated
-- [ ] Status badges color-coded per design spec
-- [ ] Empty state if no menus
-- [ ] "New Menu" button (functionality can be placeholder)
-
-**Design tokens:**
-- Background: #FAF7F2 (warm cream)
-- Text: #3D2E2E (deep brown)
-- Status Draft: #9CA3AF
-- Status In Review: #F59E0B
-- Status Approved: #10B981
-- Status Live: #E07A5F
-
-### US-004: PDF Upload for Versions
-
-**Files to create/modify:**
-- `app/menus/[id]/page.tsx` - Menu detail page
-- `app/menus/[id]/new-version/page.tsx` - Upload form
-- `app/api/menus/[id]/versions/route.ts` - POST create version with PDF
-- `components/pdf-upload.tsx` - File upload component
-- `components/version-list.tsx` - List of versions for a menu
-- `lib/blob.ts` - Vercel Blob upload helpers
-
-**Acceptance criteria:**
-- [ ] Menu detail page shows existing versions
-- [ ] "New Version" button opens upload form
-- [ ] Form: PDF file input, reason for change, change summary
-- [ ] PDF uploaded to Vercel Blob, URL stored in version record
-- [ ] New version created with status "draft"
-- [ ] Redirect to menu detail after successful upload
-
-### US-005: Version Status Workflow
-
-**Files to create/modify:**
-- `app/api/versions/[id]/route.ts` - PATCH to update version
-- `app/api/versions/[id]/status/route.ts` - POST to change status
-- `components/version-card.tsx` - Version display with status actions
-- `components/status-actions.tsx` - Buttons for status transitions
-- `lib/permissions.ts` - Role-based permission checks
-
-**Acceptance criteria:**
-- [ ] Version cards show current status
-- [ ] Status change buttons based on user role:
-  - Admin: all transitions
-  - Approver: In Review → Approved
-  - Designer: can view only
-- [ ] Draft → In Review → Approved → Live flow works
-- [ ] When version goes Live, previous Live version archived
-- [ ] Activity log entry created on status change
-
-**Status transitions:**
-```
-Draft → In Review (Admin only)
-In Review → Draft (Admin only, rejection)
-In Review → Approved (Admin, Approver)
-Approved → Live (Admin only)
-Live → Archived (automatic when new Live, or Admin manual)
+// Highlight
+{ type: 'highlight', color: '#FFFF00', rect: {x, y, width, height} }
 ```
 
-## Verification Plan
+5. **API Endpoints**
+```
+GET  /api/versions/[id]/annotations        # List annotations for version
+POST /api/versions/[id]/annotations        # Create annotation
+DELETE /api/versions/[id]/annotations/[aid] # Delete annotation
+```
 
-After each story, verify:
+6. **UI Components**
+- `components/annotation-toolbar.tsx` - Tool selection, color picker
+- `components/annotation-canvas.tsx` - Canvas drawing logic
+- Integrate into existing `components/pdf-viewer.tsx`
 
-1. **US-002**:
-   - Can log in with valid password
-   - Invalid password shows error
-   - Session persists across page refresh
-   - Logout works and redirects to login
+**Files to create:**
+- `lib/db/schema.ts` - Add annotations table
+- `app/api/versions/[id]/annotations/route.ts`
+- `components/annotation-toolbar.tsx`
+- `components/annotation-canvas.tsx`
 
-2. **US-003**:
-   - Dashboard loads after login
-   - Create a menu via API/studio, verify it appears
-   - Status badges show correct colors
+**Files to modify:**
+- `components/pdf-viewer.tsx` - Add canvas overlay
 
-3. **US-004**:
-   - Upload a PDF, verify it appears in Vercel Blob dashboard
-   - Version record created with correct PDF URL
-   - Can view PDF URL (download works)
+### US-022: Edit Tags on Existing Menus
 
-4. **US-005**:
-   - Create version, status is "draft"
-   - Change status through workflow
-   - Role restrictions enforced
-   - Going Live archives previous Live version
+Currently tags can only be assigned at menu creation. Add ability to edit.
 
-## Files to Seed
+**Implementation:**
+- Menu detail page shows current tags
+- Edit button opens tag selection dialog (reuse from new menu form)
+- PATCH `/api/menus/[id]` to update tagIds
+- Delete old menuTags, insert new ones
 
-Create `scripts/seed.ts` to populate initial data:
-- Admin user (Dylan)
-- Designer user (Raffy)
-- Approver user (Ludo)
-- Reviewer user (Amélie)
-- Default categories (À La Carte, Breakfast, Drinks, Wine, Dessert)
-- Default tags (Seasonal, Event-specific, Standard)
+### US-023: Tag Filtering on Dashboard
 
-## Out of Scope for MVP
+Add tag filter to existing dashboard filters.
 
-- Version tree visualization (Phase 2)
-- Comments with @mentions (Phase 3)
-- WhatsApp notifications (Phase 4)
-- PDF inline viewer (Phase 2)
-- Search and filtering (Phase 3)
-- Activity log UI (Phase 3)
-- Settings management UI (Phase 4)
+**Implementation:**
+- Fetch all tags for filter dropdown
+- Add tag filter state to `dashboard-filters.tsx`
+- Filter menus by selected tag(s)
+
+### US-024: Mobile Responsive Polish
+
+Ensure all pages work on mobile viewports.
+
+**Key areas:**
+- Dashboard grid → single column on mobile
+- Navigation → hamburger menu or bottom nav
+- PDF viewer → pinch to zoom, scroll
+- Settings tabs → scrollable or stacked
+- Forms → full width, proper touch targets
+
+## Deferred Features
+
+- **Twilio WhatsApp notifications** - User opted to skip for now
+- **Email notifications** - Alternative to WhatsApp, not prioritized
+- **Version branching** - Create version from non-latest version
+
+## Test Accounts
+
+| Name | Role | Password |
+|------|------|----------|
+| Dylan | Admin | dylan |
+| Raffy | Designer | raffy |
+| Ludo | Approver | ludo |
+| Amélie | Reviewer | amelie |
+
+## Key Files Reference
+
+| Purpose | File |
+|---------|------|
+| Database schema | `lib/db/schema.ts` |
+| Auth helpers | `lib/auth.ts` |
+| Role permissions | `lib/permissions.ts` |
+| PDF viewer | `components/pdf-viewer.tsx` |
+| Dashboard filters | `components/dashboard-filters.tsx` |
+| Menu card | `components/menu-card.tsx` |
+| Settings page | `app/settings/page.tsx` |
+| Activity log | `app/activity/page.tsx` |

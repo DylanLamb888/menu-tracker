@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Menu version control system for La Maison Ani London restaurant. Centralizes menu PDF management with version trees, approval workflows, role-based access, and WhatsApp notifications. See `lma-menu-version-control-prd.md` for full requirements.
+Menu version control system for La Maison Ani London restaurant. Centralizes menu PDF management with version trees, approval workflows, role-based access, and collaborative feedback.
+
+**Current Status:** Phases 1-4 complete, Phase 5 in progress. See `scripts/ralph/prd.json` for user stories.
 
 ## Commands
 
@@ -12,114 +14,139 @@ Menu version control system for La Maison Ani London restaurant. Centralizes men
 bun dev          # Start development server on localhost:3000
 bun run build    # Production build
 bun run lint     # Run ESLint
+bun run db:push  # Push schema changes to database
+bun run db:generate  # Generate migrations
 ```
 
 ## Tech Stack
 
 - **Framework**: Next.js 16 with App Router (React 19)
 - **Styling**: Tailwind CSS 4 with shadcn/ui (new-york style)
-- **Package Manager**: Bun (preferred) or npm
-- **Deployment Target**: Vercel
+- **Database**: Drizzle ORM with Vercel Postgres (Neon)
+- **File Storage**: Vercel Blob for PDFs
+- **Package Manager**: Bun
 
 ## Project Structure
 
 ```
-app/           # Next.js App Router pages and layouts
-lib/           # Utilities (cn() for className merging)
-components/    # React components (shadcn/ui goes in components/ui/)
+app/                    # Next.js App Router pages
+  api/                  # API routes
+    auth/               # Login, logout, me
+    menus/              # Menu CRUD, versions, export
+    versions/           # Version status, comments
+    users/              # User management (admin)
+    categories/         # Category management
+    tags/               # Tag management
+    activity/           # Activity log + export
+  menus/[id]/           # Menu detail, new version
+  settings/             # Admin settings (users, categories, tags)
+components/             # React components
+  ui/                   # shadcn/ui components
+lib/
+  db/                   # Drizzle schema and connection
+  auth.ts               # Session management
+  permissions.ts        # Role-based access
+  blob.ts               # Vercel Blob helpers
+scripts/
+  ralph/               # Autonomous coding infrastructure
+  seed.ts              # Database seeding
 ```
 
-## Path Aliases
+## Key Patterns
 
-`@/*` maps to the project root. Use `@/components`, `@/lib`, etc.
-
-## Planned Architecture (from PRD)
-
-- **Database**: Vercel Postgres
-- **File Storage**: Vercel Blob (for PDF uploads)
-- **Notifications**: Twilio WhatsApp API
-- **Auth**: Simple password-based (no email/username)
-
-### Data Model (key entities)
-
-- USER (roles: admin, designer, approver, reviewer, contributor)
-- MENU (with categories and tags)
-- VERSION (status workflow: Draft → In Review → Approved → Live → Archived)
-- COMMENT (with @mentions and categories)
-- ACTIVITY_LOG
-
-### API Routes Pattern
-
+### Authentication
+```typescript
+import { getCurrentUser } from "@/lib/auth";
+const user = await getCurrentUser();
+if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 ```
-/api/auth/*           # Authentication
-/api/menus/*          # Menu CRUD
-/api/menus/:id/versions  # Version management
-/api/versions/:id/*   # Version details, comments
-/api/activity         # Activity log
-/api/users            # User management (admin)
-/api/settings         # App settings (admin)
+
+### Database Queries
+```typescript
+import { db, menus, versions } from "@/lib/db";
+import { eq, desc, inArray } from "drizzle-orm";
+```
+
+### Batch Fetching (avoid N+1)
+```typescript
+// Fetch main data first
+const menuIds = result.map(m => m.id);
+// Then batch fetch related data
+const tagResults = await db.select().from(menuTags).where(inArray(menuTags.menuId, menuIds));
+```
+
+### CSV Export
+```typescript
+function escapeCSV(value: string | null): string {
+  if (!value) return "";
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
 ```
 
 ## Design Guidelines
 
-- Color palette: Warm cream (#FAF7F2), coral accent (#E07A5F), deep brown text (#3D2E2E)
-- Status colors: Draft (grey #9CA3AF), In Review (amber #F59E0B), Approved (green #10B981), Live (coral #E07A5F)
-- Typography: Inter for UI, JetBrains Mono for version labels
-- Mobile-first responsive design
+- **Background**: Warm cream #FAF7F2
+- **Text**: Deep brown #3D2E2E
+- **Accent**: Coral #E07A5F
+- **Status colors**:
+  - Draft: Grey #9CA3AF
+  - In Review: Amber #F59E0B
+  - Approved: Green #10B981
+  - Live: Coral #E07A5F
 
-## Plan Mode
+## User Roles
 
-- Make the plan extremely concise. Sacrifice grammar for the sake of concision.
-- At the end of each plan, give me a list of unresolved questions to answer, if any.
+- **Admin**: Full access, all status transitions, user/category/tag management
+- **Designer**: View only, no status changes
+- **Approver**: Can approve (In Review → Approved)
+- **Reviewer**: View only, can comment
+- **Contributor**: View only
+
+## Test Users
+
+From `scripts/seed.ts`:
+- Dylan (admin) - password: "dylan"
+- Raffy (designer) - password: "raffy"
+- Ludo (approver) - password: "ludo"
+- Amélie (reviewer) - password: "amelie"
+
+## Next Up: Phase 5
+
+### US-021: PDF Canvas Annotation System (PRIORITY)
+
+Raffy needs visual markup on PDFs. Reference: wine list with manual markup showing checkmarks, strikethroughs, "to be removed" notes, year/price changes.
+
+**Implementation approach:**
+1. Add `annotations` table to schema
+2. Canvas overlay on existing PDF viewer (`components/pdf-viewer.tsx`)
+3. Tools: pen (freehand), text, checkmark stamp, highlight
+4. Store as vector data (JSON), render on PDF
+5. API: GET/POST /api/versions/[id]/annotations
+
+**Key files to modify:**
+- `lib/db/schema.ts` - Add annotations table
+- `components/pdf-viewer.tsx` - Add canvas overlay
+- `app/api/versions/[id]/annotations/route.ts` - New API route
+
+### Other Phase 5 stories:
+- US-022: Edit tags on existing menus
+- US-023: Tag filtering on dashboard
+- US-024: Mobile responsive polish
 
 ## Code Quality
 
-This is production code for a real business. Must be maintainable long-term.
-
-- Run all feedback loops before committing: `bun run build` and `bun run lint`
-- Keep changes small and focused - one logical change per commit
-- Prefer multiple small commits over one large commit
-
-## Task Prioritization
-
-When choosing what to work on, prioritize in this order:
-
-1. Architectural decisions and core abstractions
-2. Integration points between modules
-3. Unknown unknowns and spike work
-4. Standard features and implementation
-5. Polish, cleanup, and quick wins
+- Run `bun run build && bun run lint` before committing
+- Keep changes focused - one logical change per commit
+- Follow existing patterns in codebase
 
 ## Ralph Loop (Autonomous Coding)
 
-Scripts in `scripts/ralph/` for autonomous task execution:
-
 ```bash
-./scripts/ralph/ralph-once.sh    # Single iteration, human-in-the-loop
-./scripts/ralph/ralph.sh 10      # Run 10 iterations autonomously
+./scripts/ralph/ralph-once.sh    # Single iteration
+./scripts/ralph/ralph.sh 10      # Run 10 iterations
 ```
 
-**Key files:**
-- `prd.json` - User stories with `passes: boolean` status
-- `prompt.md` - Instructions given to each iteration
-- `progress.txt` - Learnings and completed work log
-
-**Workflow per iteration:**
-1. Read `prd.json` and `progress.txt` (check Codebase Patterns first)
-2. Pick highest priority story where `passes: false`
-3. Implement the story
-4. Run feedback loops: `bun run build && bun run lint`
-5. Commit with message: `feat: [Story ID] - [Story Title]`
-6. Update `prd.json` to set `passes: true`
-7. Append learnings to `progress.txt`
-
-**Stop condition:** When all stories have `passes: true`, output `<promise>COMPLETE</promise>`
-
-## Progress Tracking
-
-When working in a Ralph loop:
-
-- Check `## Codebase Patterns` section at TOP of `progress.txt` before starting
-- Append completed work with: what was done, files changed, learnings
-- Add reusable patterns to the Codebase Patterns section
-- Update this CLAUDE.md file if you discover important conventions
+See `scripts/ralph/prompt.md` for instructions, `scripts/ralph/progress.txt` for history.
