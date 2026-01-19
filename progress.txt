@@ -227,3 +227,22 @@ All collaboration features implemented:
 - CSV includes: version label, status, date, uploader, reason, summary
 - Added Export button next to New Version on menu detail page
 - Filename format: `{menu_name}_history_{date}.csv`
+
+**US-020: Export Activity Log** - COMPLETE
+- Created `app/api/activity/export/route.ts` for CSV generation
+- CSV includes: date, user, action, target, details
+- Export respects current filter (passes action query param)
+- Added Export button on activity page
+- Filename includes date range when multiple days
+
+---
+
+## Phase 4 COMPLETE
+
+All settings and polish features implemented:
+- Admin settings page with Users, Categories, Tags tabs
+- User management (add, edit, reset password, deactivate)
+- Category management with drag-to-reorder
+- Tag management with color picker
+- Export menu history as CSV
+- Export activity log as CSV (with filter support)

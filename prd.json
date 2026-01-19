@@ -74,7 +74,7 @@
       "title": "Export Activity Log",
       "description": "Export filtered activity log as CSV.",
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Export button on activity page",
         "CSV includes: date, user, action, target, details",

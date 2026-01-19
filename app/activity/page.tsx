@@ -13,6 +13,7 @@ import {
   RefreshCw,
   ArrowRight,
   Clock,
+  Download,
 } from "lucide-react";
 
 type ActionType =
@@ -156,6 +157,18 @@ export default function ActivityPage() {
               Recent actions across all menus
             </p>
           </div>
+          <a
+            href={`/api/activity/export${filter ? `?action=${filter}` : ""}`}
+            download
+          >
+            <Button
+              variant="outline"
+              className="border-[#3D2E2E]/20 text-[#3D2E2E]/70 hover:text-[#3D2E2E]"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </a>
         </div>
 
         {/* Filters */}
