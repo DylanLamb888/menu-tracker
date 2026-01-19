@@ -39,6 +39,7 @@ yarn-error.log*
 
 # local uploads (dev only)
 /public/uploads
+/public/*.pdf
 
 # typescript
 *.tsbuildinfo
