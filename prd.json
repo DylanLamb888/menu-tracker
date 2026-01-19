@@ -20,7 +20,7 @@
       "title": "User Management",
       "description": "Admin can view, add, edit, and deactivate users.",
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "List all users with name, role, status",
         "Add new user form (name, password, role)",

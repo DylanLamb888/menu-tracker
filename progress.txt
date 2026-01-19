@@ -201,3 +201,10 @@ All collaboration features implemented:
 - Added `userRole` prop to `AppShell` component
 - Added Settings nav link in header (only visible to admin users)
 - Updated server-side pages to pass `userRole` to AppShell
+
+**US-016: User Management** - COMPLETE
+- Extended `app/api/users/route.ts` with POST (create user) and includeInactive query param
+- Created `app/api/users/[id]/route.ts` with PATCH (update name, role, password, isActive)
+- Created `components/user-management.tsx` - full user list with dialogs
+- Features: List all users with name/role/status, Add new user form, Edit user, Reset password, Deactivate/reactivate toggle
+- Admin cannot deactivate their own account (safety check)
