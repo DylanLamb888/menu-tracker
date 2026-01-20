@@ -41,6 +41,15 @@ export const activityActionEnum = pgEnum("activity_action", [
   "pdf_viewed",
   "version_assigned",
   "user_logged_in",
+  "annotation_added",
+  "annotation_deleted",
+]);
+
+export const annotationToolEnum = pgEnum("annotation_tool", [
+  "pen",
+  "text",
+  "checkmark",
+  "highlight",
 ]);
 
 export const activityTargetTypeEnum = pgEnum("activity_target_type", [
@@ -153,6 +162,21 @@ export const commentMentions = pgTable("comment_mentions", {
     .references(() => users.id, { onDelete: "cascade" }),
 });
 
+export const annotations = pgTable("annotations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  versionId: uuid("version_id")
+    .notNull()
+    .references(() => versions.id, { onDelete: "cascade" }),
+  pageNumber: integer("page_number").notNull(),
+  authorId: uuid("author_id")
+    .notNull()
+    .references(() => users.id),
+  tool: annotationToolEnum("tool").notNull(),
+  color: text("color").notNull().default("#E07A5F"),
+  data: jsonb("data").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const activityLogs = pgTable("activity_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
@@ -194,6 +218,9 @@ export type NewComment = typeof comments.$inferInsert;
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type NewActivityLog = typeof activityLogs.$inferInsert;
+
+export type Annotation = typeof annotations.$inferSelect;
+export type NewAnnotation = typeof annotations.$inferInsert;
 
 export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;

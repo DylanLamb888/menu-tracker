@@ -22,8 +22,10 @@ const PdfViewer = dynamic(
 interface LazyPdfViewerProps {
   url: string;
   filename: string;
+  versionId?: string;
+  canAnnotate?: boolean;
 }
 
-export function LazyPdfViewer({ url, filename }: LazyPdfViewerProps) {
-  return <PdfViewer url={url} filename={filename} />;
+export function LazyPdfViewer({ url, filename, versionId, canAnnotate }: LazyPdfViewerProps) {
+  return <PdfViewer url={url} filename={filename} versionId={versionId} canAnnotate={canAnnotate} />;
 }

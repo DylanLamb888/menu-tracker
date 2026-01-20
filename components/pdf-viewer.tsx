@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,7 @@ import {
   Maximize2,
   Download,
 } from "lucide-react";
+import { AnnotationCanvas } from "./annotation-canvas";
 
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -18,14 +19,18 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 interface PdfViewerProps {
   url: string;
   filename: string;
+  versionId?: string;
+  canAnnotate?: boolean;
 }
 
-export function PdfViewer({ url, filename }: PdfViewerProps) {
+export function PdfViewer({ url, filename, versionId, canAnnotate = false }: PdfViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pageDimensions, setPageDimensions] = useState({ width: 0, height: 0 });
+  const pageContainerRef = useRef<HTMLDivElement>(null);
 
   const onDocumentLoadSuccess = useCallback(
     ({ numPages }: { numPages: number }) => {
@@ -39,6 +44,18 @@ export function PdfViewer({ url, filename }: PdfViewerProps) {
   const onDocumentLoadError = useCallback(() => {
     setError("Failed to load PDF. Please try downloading instead.");
     setIsLoading(false);
+  }, []);
+
+  const onPageRenderSuccess = useCallback(() => {
+    if (pageContainerRef.current) {
+      const canvas = pageContainerRef.current.querySelector("canvas");
+      if (canvas) {
+        setPageDimensions({
+          width: canvas.offsetWidth,
+          height: canvas.offsetHeight,
+        });
+      }
+    }
   }, []);
 
   const goToPrevPage = () => setPageNumber((p) => Math.max(1, p - 1));
@@ -145,17 +162,29 @@ export function PdfViewer({ url, filename }: PdfViewerProps) {
               </div>
             }
           >
-            <Page
-              pageNumber={pageNumber}
-              scale={scale}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              loading={
-                <div className="flex items-center justify-center py-12">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#E07A5F] border-t-transparent" />
-                </div>
-              }
-            />
+            <div ref={pageContainerRef} className="relative inline-block">
+              <Page
+                pageNumber={pageNumber}
+                scale={scale}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                onRenderSuccess={onPageRenderSuccess}
+                loading={
+                  <div className="flex items-center justify-center py-12">
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#E07A5F] border-t-transparent" />
+                  </div>
+                }
+              />
+              {versionId && pageDimensions.width > 0 && (
+                <AnnotationCanvas
+                  versionId={versionId}
+                  pageNumber={pageNumber}
+                  width={pageDimensions.width}
+                  height={pageDimensions.height}
+                  canAnnotate={canAnnotate}
+                />
+              )}
+            </div>
           </Document>
         )}
       </div>

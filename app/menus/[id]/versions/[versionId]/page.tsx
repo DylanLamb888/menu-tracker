@@ -12,6 +12,7 @@ import { CommentsSection } from "@/components/comments-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, User, Calendar, FileText, GitBranch } from "lucide-react";
+import { canAnnotate } from "@/lib/permissions";
 
 interface VersionDetailPageProps {
   params: Promise<{ id: string; versionId: string }>;
@@ -183,7 +184,12 @@ export default async function VersionDetailPage({
         <div className="grid gap-6 lg:grid-cols-3">
           {/* PDF Viewer - takes 2 columns */}
           <div className="lg:col-span-2">
-            <LazyPdfViewer url={version.pdfUrl} filename={version.pdfFilename} />
+            <LazyPdfViewer
+              url={version.pdfUrl}
+              filename={version.pdfFilename}
+              versionId={version.id}
+              canAnnotate={canAnnotate(user.role)}
+            />
           </div>
 
           {/* Metadata sidebar */}

@@ -68,3 +68,11 @@ export function getTransitionLabel(
   };
   return labels[`${from}:${to}`] || `Change to ${getStatusLabel(to)}`;
 }
+
+export function canAnnotate(userRole: UserRole): boolean {
+  return ["admin", "designer", "approver"].includes(userRole);
+}
+
+export function isAdmin(userRole: UserRole): boolean {
+  return userRole === "admin";
+}
