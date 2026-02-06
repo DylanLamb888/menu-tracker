@@ -27,7 +27,6 @@
     "drizzle-orm": "^0.45.1",
     "jose": "^6.1.3",
     "lucide-react": "^0.562.0",
-    "motion": "^12.26.2",
     "next": "16.1.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",

@@ -7,7 +7,8 @@
     "phase2": "Enhanced UX (US-006 to US-010) - COMPLETE",
     "phase3": "Collaboration (US-011 to US-014) - COMPLETE",
     "phase4": "Admin & Export (US-015 to US-020) - COMPLETE",
-    "phase5": "Annotations & Polish (US-021 to US-024) - IN PROGRESS"
+    "phase5": "Annotations & Polish (US-021 to US-024) - IN PROGRESS",
+    "phase6": "Hardening & Quality (US-025 to US-032)"
   },
   "userStories": [
     {
@@ -147,7 +148,7 @@
         "bun run build passes without errors"
       ],
       "context": "Raffy (designer) needs visual markup like checkmarks, strikethroughs, and text notes directly on menu PDFs. See wine list example with year/price changes marked up.",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-022",
@@ -192,6 +193,153 @@
         "Settings tabs work on mobile",
         "bun run build passes without errors"
       ],
+      "passes": false
+    },
+    {
+      "id": "US-025",
+      "title": "Extract Shared Auth Config and Harden JWT Secret",
+      "phase": 6,
+      "priority": 1,
+      "description": "The JWT signing secret is duplicated in lib/auth.ts and middleware.ts with an identical hardcoded fallback string. Extract to a shared module and fail loudly if AUTH_SECRET is missing in production.",
+      "acceptanceCriteria": [
+        "Create lib/config.ts exporting SECRET_KEY (TextEncoder-encoded AUTH_SECRET)",
+        "lib/config.ts throws an error if AUTH_SECRET env var is missing when NODE_ENV === 'production'",
+        "lib/config.ts allows the fallback only when NODE_ENV !== 'production' (for local dev)",
+        "lib/auth.ts imports SECRET_KEY from lib/config.ts instead of constructing its own",
+        "middleware.ts imports SECRET_KEY from lib/config.ts instead of constructing its own",
+        "No duplicate secret construction remains in the codebase",
+        "bun run build passes without errors"
+      ],
+      "context": "Currently both files have: const SECRET_KEY = new TextEncoder().encode(process.env.AUTH_SECRET || 'fallback-secret-change-in-production'). This is a duplication risk and a production safety issue.",
+      "passes": false
+    },
+    {
+      "id": "US-026",
+      "title": "Add Error Handling to Unprotected API Routes",
+      "phase": 6,
+      "priority": 2,
+      "description": "Three API routes lack try-catch blocks, meaning a DB failure would return an unhandled 500 with a stack trace instead of a clean error response.",
+      "acceptanceCriteria": [
+        "app/api/auth/logout/route.ts: wrap deleteSession() call in try-catch, return 500 JSON on failure",
+        "app/api/auth/me/route.ts: wrap getCurrentUser() call in try-catch, return 500 JSON on failure",
+        "app/api/activity/route.ts: wrap the entire GET handler body in try-catch, return 500 JSON on failure with console.error",
+        "Error responses follow existing pattern: { error: 'descriptive message' } with status 500",
+        "bun run build passes without errors"
+      ],
+      "context": "All other API routes in the codebase use try-catch consistently. These three are the exceptions. Match the pattern used in e.g. app/api/menus/route.ts.",
+      "passes": false
+    },
+    {
+      "id": "US-027",
+      "title": "Validate PDF Magic Bytes on Upload",
+      "phase": 6,
+      "priority": 3,
+      "description": "The version upload endpoint at app/api/menus/[id]/versions/route.ts only checks file.type (MIME type), which is client-controlled. Add server-side validation of the actual file content by checking the PDF magic bytes.",
+      "acceptanceCriteria": [
+        "After the existing MIME type check, read the first 5 bytes of the uploaded file buffer",
+        "Verify the file starts with the PDF signature bytes: %PDF- (hex: 25 50 44 46 2D)",
+        "If magic bytes don't match, return 400 with error 'File is not a valid PDF'",
+        "The existing MIME type check remains in place as a fast first check",
+        "The file buffer is read only once (reuse for both validation and upload)",
+        "bun run build passes without errors"
+      ],
+      "context": "Currently at line 55: if (!file || file.type !== 'application/pdf'). A malicious client can set any MIME type. The file.arrayBuffer() is already called later in lib/blob.ts uploadPdf, but we need to check bytes before passing to upload.",
+      "passes": false
+    },
+    {
+      "id": "US-028",
+      "title": "Validate Annotation Data Shape",
+      "phase": 6,
+      "priority": 4,
+      "description": "The annotation POST and PATCH endpoints only check typeof data === 'object' but don't validate the internal structure. Add runtime validation against the AnnotationData types defined in lib/annotation-types.ts.",
+      "acceptanceCriteria": [
+        "Create a validateAnnotationData(tool, data) function in lib/annotation-types.ts that returns { valid: boolean; error?: string }",
+        "For pen: data must have type 'pen', points array (each with numeric x and y in 0-1 range), numeric strokeWidth > 0",
+        "For text: data must have type 'text', numeric x and y in 0-1 range, non-empty string content (max 500 chars), numeric fontSize > 0",
+        "For checkmark: data must have type 'checkmark', numeric x and y in 0-1 range, numeric size > 0",
+        "For highlight: data must have type 'highlight', numeric x and y in 0-1 range, numeric width > 0 and height > 0",
+        "POST handler in app/api/versions/[id]/annotations/route.ts calls validateAnnotationData after the existing typeof check",
+        "PATCH handler in same file calls validateAnnotationData when data is provided",
+        "Invalid data returns 400 with the specific validation error message",
+        "bun run build passes without errors"
+      ],
+      "context": "Type definitions already exist in lib/annotation-types.ts (PenData, TextData, CheckmarkData, HighlightData). Coordinates are normalized to 0-1 range by the canvas component. The tool field is already validated against the enum; this adds shape validation for the data field.",
+      "passes": false
+    },
+    {
+      "id": "US-029",
+      "title": "Add Database Indexes for Query Performance",
+      "phase": 6,
+      "priority": 5,
+      "description": "The schema has no indexes beyond primary keys. Add indexes to foreign key columns and columns used in WHERE/ORDER BY clauses across API routes.",
+      "acceptanceCriteria": [
+        "Add index on versions.menuId (used in dashboard subqueries, version list, export)",
+        "Add index on versions.status (used in dashboard 'needs attention' subquery)",
+        "Add index on versions.assignedTo (used in dashboard assigned-version check)",
+        "Add index on comments.versionId (used in comments list query)",
+        "Add index on activityLogs.userId (used in activity log queries)",
+        "Add index on activityLogs.createdAt (used in ORDER BY for activity list and export)",
+        "Add index on annotations.versionId (used in annotation GET queries)",
+        "Add composite index on menuTags(menuId, tagId) (used in batch tag fetching)",
+        "All indexes added in lib/db/schema.ts using Drizzle's index() function",
+        "Run bun run db:generate to create migration, then bun run db:push to apply",
+        "bun run build passes without errors"
+      ],
+      "context": "Drizzle ORM supports indexes via pgTable's third argument or .indexes(). Use the pattern: (table) => ({ menuIdIdx: index('idx_versions_menu_id').on(table.menuId) }). See Drizzle docs for exact syntax.",
+      "passes": false
+    },
+    {
+      "id": "US-030",
+      "title": "Add Loading and Error Boundaries",
+      "phase": 6,
+      "priority": 6,
+      "description": "No loading.tsx or error.tsx files exist anywhere in the app. Server-rendered pages show nothing during navigation, and any server component error crashes the entire page with no recovery.",
+      "acceptanceCriteria": [
+        "Create app/loading.tsx with a centered spinner matching the design system (use existing Tailwind animate-spin pattern from other components)",
+        "Create app/error.tsx as a client component ('use client') with a 'Something went wrong' message, a retry button that calls reset(), and a link back to dashboard. Use design system colors.",
+        "Create app/menus/[id]/loading.tsx with a skeleton showing the breadcrumb area, a large rectangle for PDF viewer, and a sidebar placeholder",
+        "Create app/settings/loading.tsx with a skeleton showing the tab bar and a content area placeholder",
+        "All loading/error files use the warm cream background (#FAF7F2) and design system colors",
+        "bun run build passes without errors"
+      ],
+      "context": "Next.js App Router uses loading.tsx for Suspense boundaries during navigation and error.tsx for error boundaries. The dashboard (app/page.tsx), menu detail (app/menus/[id]/page.tsx), and settings (app/settings/page.tsx) are all server components that currently block the UI while fetching data.",
+      "passes": false
+    },
+    {
+      "id": "US-031",
+      "title": "Shared Date Formatting Utility",
+      "phase": 6,
+      "priority": 7,
+      "description": "Date formatting is inconsistent across the codebase. Some components create Intl.DateTimeFormat outside the component (good), others inline it in render. Create a shared utility.",
+      "acceptanceCriteria": [
+        "Create lib/format.ts with formatDate(date) returning 'DD MMM YYYY' format (e.g., '19 Jan 2026') using en-GB locale",
+        "Add formatDateTime(date) returning 'DD MMM YYYY, HH:MM' format (e.g., '19 Jan 2026, 14:30') using en-GB locale",
+        "Both functions accept Date or string input and handle null/undefined by returning an empty string",
+        "Replace inline Intl.DateTimeFormat usage in: app/menus/[id]/versions/[versionId]/page.tsx, components/menu-card.tsx, components/comments-list.tsx",
+        "Replace the hoisted dateFormatter in app/activity/page.tsx with the shared import",
+        "All replaced usages produce the same output format as before",
+        "bun run build passes without errors"
+      ],
+      "context": "Currently app/activity/page.tsx hoists: const dateFormatter = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }). The version detail page uses inline: new Intl.DateTimeFormat('en-GB', { ... }).format(). Standardize to one import.",
+      "passes": false
+    },
+    {
+      "id": "US-032",
+      "title": "Convert New Menu Page to Server Component",
+      "phase": 6,
+      "priority": 8,
+      "description": "app/menus/new/page.tsx is a client component that fetches categories and tags via useEffect on mount. Convert the data fetching to server-side and pass as props, matching the pattern used by the dashboard (app/page.tsx) and menu detail (app/menus/[id]/page.tsx).",
+      "acceptanceCriteria": [
+        "app/menus/new/page.tsx becomes a server component that fetches categories and tags from DB directly (using db import from @/lib/db)",
+        "Server component checks auth with getCurrentUser() and redirects to /login if not authenticated",
+        "Server component passes categories and tags arrays as props to a new client component",
+        "Create components/new-menu-form.tsx as the client component ('use client') containing the form state and submission logic currently in the page",
+        "The new client component receives categories and tags as props instead of fetching them",
+        "No useEffect data fetching remains in the new menu flow",
+        "Form behavior (submission, validation, redirect) works identically to before",
+        "bun run build passes without errors"
+      ],
+      "context": "The current page is entirely 'use client' and fetches /api/categories and /api/tags in useEffect. This causes a loading waterfall: page loads -> JS executes -> two API calls -> render. Server-fetching eliminates the waterfall. Follow the exact pattern used in app/page.tsx where getMenusWithDetails() fetches data and passes it to DashboardFilters client component.",
       "passes": false
     }
   ]

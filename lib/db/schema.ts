@@ -189,38 +189,13 @@ export const activityLogs = pgTable("activity_logs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const settings = pgTable("settings", {
-  key: text("key").primaryKey(),
-  value: jsonb("value").notNull(),
-});
-
 // Type exports
 export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-
 export type Category = typeof categories.$inferSelect;
-export type NewCategory = typeof categories.$inferInsert;
-
 export type Tag = typeof tags.$inferSelect;
-export type NewTag = typeof tags.$inferInsert;
-
 export type Menu = typeof menus.$inferSelect;
-export type NewMenu = typeof menus.$inferInsert;
-
 export type Version = typeof versions.$inferSelect;
-export type NewVersion = typeof versions.$inferInsert;
-
 export type ItemChange = typeof itemChanges.$inferSelect;
-export type NewItemChange = typeof itemChanges.$inferInsert;
-
 export type Comment = typeof comments.$inferSelect;
-export type NewComment = typeof comments.$inferInsert;
-
 export type ActivityLog = typeof activityLogs.$inferSelect;
-export type NewActivityLog = typeof activityLogs.$inferInsert;
-
 export type Annotation = typeof annotations.$inferSelect;
-export type NewAnnotation = typeof annotations.$inferInsert;
-
-export type Setting = typeof settings.$inferSelect;
-export type NewSetting = typeof settings.$inferInsert;

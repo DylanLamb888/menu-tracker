@@ -118,43 +118,9 @@ Added ability to assign tags to menus (not part of original PRD, added as enhanc
 
 ---
 
-## Phase 5 Planning (US-021 to US-024) - NEXT
+## Phase 5 Progress
 
-### US-021: PDF Canvas Annotation System (PRIORITY)
-Raffy needs visual markup on PDFs - checkmarks, strikethroughs, text notes, year/price changes.
-
-**Reference:** User shared wine list PDF with manual markup showing:
-- ✓ checkmarks for approved items
-- Strikethrough old values + new values (2023 → 2024, £16 → £15)
-- "to be removed" text annotations
-- Highlight boxes around changes
-- Bracket grouping for related items
-
-**Implementation approach:**
-1. Create `annotations` table in schema (versionId, pageNumber, type, data JSON, createdBy)
-2. Canvas overlay component on PDF viewer
-3. Drawing tools: pen, text, checkmark stamp, highlight
-4. Store annotations as vector data (paths, positions, colors)
-5. Render annotations on top of PDF
-6. API: GET/POST /api/versions/[id]/annotations
-
-### US-022: Edit Tags on Existing Menus
-- Menu detail page shows tags, edit button opens dialog
-- PATCH /api/menus/[id] to update tags
-
-### US-023: Tag Filtering on Dashboard
-- Add tag filter dropdown to dashboard filters
-
-### US-024: Mobile Responsive Polish
-- Test and fix all pages on mobile viewports
-
----
-
-## Test Users (from seed.ts)
-
-- Dylan (admin) - password: "dylan"
-- Raffy (designer) - password: "raffy"
-- Ludo (approver) - password: "ludo"
-- Amélie (reviewer) - password: "amelie"
+### US-021: PDF Canvas Annotation System - COMPLETE
+Implemented 2026-02-06. Canvas overlay on PDF viewer with pen, text, checkmark, highlight tools. Annotations stored as vector JSON in `annotations` table, scoped per version + page. API at `/api/versions/[id]/annotations`. Toolbar in `components/annotation-toolbar.tsx`, canvas in `components/annotation-canvas.tsx`.
 
 ---
