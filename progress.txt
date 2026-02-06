@@ -1,248 +1,74 @@
 # Menu Tracker Progress Log
 
+> Canonical PRD: `scripts/ralph/prd.json`
+> Ralph progress log: `scripts/ralph/progress.txt`
+
+---
+
 ## Codebase Patterns
 
 ### Database
-- Drizzle ORM with Neon Postgres (switched from @vercel/postgres)
-- Schema in `lib/db/schema.ts`, connection in `lib/db/index.ts`
+- Drizzle ORM with Neon Postgres, schema in `lib/db/schema.ts`
 - Use `db.select().from()` with `.where()` for queries
-- Batch fetches to avoid N+1 (see `app/menus/[id]/page.tsx` for pattern)
+- Batch fetches with `inArray()` to avoid N+1
 
 ### Auth
 - Password-only auth via `lib/auth.ts`
-- `getCurrentUser()` returns user or null
+- `getCurrentUser()` returns user or null (cached per request via `React.cache()`)
 - JWT in HTTP-only cookie, 30-day expiry
 - Middleware redirects unauthenticated users to /login
 
 ### Components
 - shadcn/ui (new-york style) in `components/ui/`
-- Custom components in `components/`
+- `cn()` from `@/lib/utils` for className merging
 - App shell wrapper for consistent layout
 - Status colors: Draft=#9CA3AF, In Review=#F59E0B, Approved=#10B981, Live=#E07A5F
 
 ### API Routes
-- Next.js App Router API routes in `app/api/`
+- Next.js App Router in `app/api/`
 - Always check auth via `getCurrentUser()`
-- Return `NextResponse.json()` with appropriate status codes
+- Wrap in try-catch, return `NextResponse.json()` with status codes
 
-### File Storage
-- Vercel Blob for PDFs via `lib/blob.ts`
-- `uploadPdf()` helper returns URL and filename
-
-### Permissions
-- Role-based permissions in `lib/permissions.ts`
-- `canChangeStatus()` and `getAvailableTransitions()` for status workflow
-
-### Performance Patterns
-- Hoist `Intl.DateTimeFormat` outside components (recreating is expensive)
-- Use `useMemo` for Maps used in lookups within components
-- Hoist static JSX elements outside components to avoid recreation
-- Use `next/dynamic` with `ssr: false` for large client-only libs (react-pdf)
-- `optimizePackageImports` in next.config.ts for icon libraries
+### Performance
+- Hoist `Intl.DateTimeFormat` outside components
+- `useMemo` for Maps in lookups
+- `next/dynamic` with `ssr: false` for react-pdf
+- `optimizePackageImports` in next.config.ts for lucide-react
 
 ---
 
-## Completed Work
+## Completed Phases
 
-### 2026-01-16: MVP Foundation Complete
+**Phase 1 — Core Foundation (US-001 to US-005)**
+Auth, dashboard, menu CRUD, PDF upload, status workflow.
 
-**US-001: Database Schema** - COMPLETE
-- 12 tables with all relationships
-- Enums for roles, statuses, categories
-- Type exports for all entities
+**Phase 2 — Enhanced UX (US-006 to US-010)**
+PDF viewer, assignments, item changes, version tree, branching.
 
-**US-002: Authentication** - COMPLETE
-- Login page with password-only auth
-- Session management with JWT cookies
-- Middleware protection for routes
-- /api/auth/login, /api/auth/logout, /api/auth/me
+**Phase 3 — Collaboration (US-011 to US-014)**
+Comments with @mentions, activity log, dashboard search/filter.
 
-**US-003: Dashboard** - COMPLETE
-- Menu grid with status badges
-- Empty state handling
-- Admin-only "New Menu" button
-- Efficient single-query with subquery for latest status
+**Phase 4 — Admin & Export (US-015 to US-020)**
+Settings page, user/category/tag management, CSV export for menus and activity.
 
-**US-004: PDF Upload** - COMPLETE
-- Menu detail page with version list
-- New version form with PDF upload
-- Vercel Blob integration
-- Version created with draft status
-
-**US-005: Status Workflow** - COMPLETE
-- Status transition buttons per role
-- Permissions enforced server-side
-- Auto-archive previous live version
-- Activity log on status change
-
-**Additional: New Menu Flow** - COMPLETE
-- /menus/new page for creating menus
-- Category selection dropdown
-- Redirect to menu detail after creation
+**Phase 5 — Annotations & Polish (US-021 to US-024)** — in progress
+US-021 (PDF Canvas Annotations) complete. US-022 to US-024 remaining.
 
 ---
 
-### 2026-01-16: Phase 2 - Version Management Complete
+## Next Up
 
-**US-006: PDF Inline Viewer** - COMPLETE
-- `components/pdf-viewer.tsx` - react-pdf based viewer
-- Page navigation, zoom controls, download button
-- Version detail page `/menus/[id]/versions/[versionId]` with inline viewer
+### Phase 5 Remaining
+- **US-022**: Edit tags on existing menus (PATCH /api/menus/[id] with tagIds)
+- **US-023**: Tag filtering on dashboard (combine with category/status filters)
+- **US-024**: Mobile responsive polish (hamburger nav, touch-friendly forms)
 
-**US-007: Version Assignment** - COMPLETE
-- Assignment selector component for admins
-- `GET /api/users` endpoint for user list
-- Activity log on assignment change
-- "Your turn" badge on dashboard and version list for assigned items
-- Ring highlight on cards when assigned to current user
-
-**US-008: Item-Level Change Tracking** - COMPLETE
-- `components/item-changes-input.tsx` - dynamic form for item changes
-- Item changes saved to `item_changes` table on version creation
-- Item changes displayed on version detail page
-
-**US-009: Version Tree Visualization** - COMPLETE
-- `components/version-tree.tsx` - timeline visualization
-- `components/version-views.tsx` - toggle between Timeline and Details views
-- Status-colored nodes with "Current" badge for live version
-- Click nodes to navigate to version detail
-
-**US-010: Branch Creation** - COMPLETE
-- "Branch" button on version detail page links to `/menus/[id]/new-version?from=[versionId]`
-- New version page shows parent version when branching
-- API accepts explicit `parentVersionId` parameter
-- Version tree shows branch indicator with GitBranch icon
-- Version detail shows "Branched from" link to parent version
-
----
-
-### 2026-01-16: Vercel React Best Practices Applied
-
-**Bundle Optimization**
-- Added `optimizePackageImports: ["lucide-react"]` to next.config.ts
-- Reduces lucide-react bundle by tree-shaking unused icons
-
-**Dynamic Import for PDF Viewer**
-- Created `components/pdf-viewer-lazy.tsx` with `next/dynamic`
-- react-pdf (~500KB) now loaded only when viewing version detail page
-- `ssr: false` since PDF.js requires browser APIs
-- Loading state shown while component loads
-
-**Already Following Best Practices**
-- `React.cache()` for auth deduplication in `lib/auth.ts`
-- "Start early, await late" pattern in `app/menus/[id]/page.tsx`
-- Efficient subqueries in dashboard to avoid N+1
-- `useCallback` for event handlers in pdf-viewer
-
-**Additional Optimizations Applied**
-- `useMemo` for versionMap in version-tree.tsx (O(1) lookups)
-- Hoisted `Intl.DateTimeFormat` formatters outside components
-- Hoisted static empty state JSX to avoid recreation per render
-- Functional `setState` updates for stable callback references
-
----
-
-### 2026-01-16: Phase 3 - Collaboration Started
-
-**US-011: Version Comments** - COMPLETE
-- `app/api/versions/[id]/comments/route.ts` - GET/POST for comments
-- `components/comment-input.tsx` - textarea with category selector buttons
-- `components/comments-list.tsx` - displays comments with author, timestamp, category badge
-- `components/comments-section.tsx` - combines input and list with refresh state
-- Comments section added to version detail page
-
-**US-012: @Mentions in Comments** - COMPLETE
-- Comment input detects @ and shows user autocomplete dropdown
-- Arrow keys + Enter/Tab to select users from dropdown
-- API parses @mentions and stores in `comment_mentions` table
-- Comments list highlights @mentions in coral color
-
-**US-013: Activity Log UI** - COMPLETE
-- `app/api/activity/route.ts` - GET endpoint with action filtering
-- `app/activity/page.tsx` - Activity page with filter buttons
-- Navigation added to app-shell (Menus, Activity tabs)
-- Links from activity items to related version/menu
-- Action type icons and color-coded badges
-
-**US-014: Dashboard Search and Filter** - COMPLETE
-- `components/dashboard-filters.tsx` - Client component with search and filters
-- Search input filters menus by name
-- Category dropdown filter (fetched from database)
-- Status dropdown filter (draft, in_review, approved, live, archived)
-- Clear filters button, "Showing X of Y" count
-- Categories fetched in parallel with menus
-
----
-
-## Phase 3 COMPLETE
-
-All collaboration features implemented:
-- Version comments with categories
-- @mentions with autocomplete
-- Activity log UI with filters
-- Dashboard search and filtering
-
----
-
-## Summary of All Phases
-
-**Phase 1 (MVP):** Authentication, Dashboard, Menu CRUD, PDF Upload, Status Workflow
-**Phase 2 (Version Management):** PDF Viewer, Assignments, Item Changes, Version Tree, Branching
-**Phase 3 (Collaboration):** Comments, @Mentions, Activity Log, Search & Filter
-**Phase 4 (Settings & Polish):** Admin Settings, User/Category/Tag Management, Export Features
-
----
-
-### 2026-01-19: Phase 4 - Settings & Polish Started
-
-**US-015: Admin Settings Page** - COMPLETE
-- Created `app/settings/page.tsx` with admin-only access (redirects non-admins to dashboard)
-- Settings page has three tabs: Users, Categories, Tags (placeholder content)
-- Added `userRole` prop to `AppShell` component
-- Added Settings nav link in header (only visible to admin users)
-- Updated server-side pages to pass `userRole` to AppShell
-
-**US-016: User Management** - COMPLETE
-- Extended `app/api/users/route.ts` with POST (create user) and includeInactive query param
-- Created `app/api/users/[id]/route.ts` with PATCH (update name, role, password, isActive)
-- Created `components/user-management.tsx` - full user list with dialogs
-- Features: List all users with name/role/status, Add new user form, Edit user, Reset password, Deactivate/reactivate toggle
-- Admin cannot deactivate their own account (safety check)
-
-**US-017: Category Management** - COMPLETE
-- Extended `app/api/categories/route.ts` with POST (create category) and sortOrder
-- Created `app/api/categories/[id]/route.ts` with PATCH (update) and DELETE
-- Created `app/api/categories/reorder/route.ts` for batch sort order updates
-- Created `components/category-management.tsx` with drag-to-reorder
-- Delete blocked if category is in use by menus
-
-**US-018: Tag Management** - COMPLETE
-- Created `app/api/tags/route.ts` with GET and POST
-- Created `app/api/tags/[id]/route.ts` with PATCH and DELETE
-- Created `components/tag-management.tsx` with color picker (8 presets + custom)
-- Delete blocked if tag is in use by menus
-
-**US-019: Export Menu History** - COMPLETE
-- Created `app/api/menus/[id]/export/route.ts` for CSV generation
-- CSV includes: version label, status, date, uploader, reason, summary
-- Added Export button next to New Version on menu detail page
-- Filename format: `{menu_name}_history_{date}.csv`
-
-**US-020: Export Activity Log** - COMPLETE
-- Created `app/api/activity/export/route.ts` for CSV generation
-- CSV includes: date, user, action, target, details
-- Export respects current filter (passes action query param)
-- Added Export button on activity page
-- Filename includes date range when multiple days
-
----
-
-## Phase 4 COMPLETE
-
-All settings and polish features implemented:
-- Admin settings page with Users, Categories, Tags tabs
-- User management (add, edit, reset password, deactivate)
-- Category management with drag-to-reorder
-- Tag management with color picker
-- Export menu history as CSV
-- Export activity log as CSV (with filter support)
+### Phase 6 — Hardening & Quality (US-025 to US-032)
+- **US-025**: Extract shared JWT secret to lib/config.ts, fail in production if missing
+- **US-026**: Add try-catch to /api/auth/logout, /api/auth/me, /api/activity
+- **US-027**: Validate PDF magic bytes on upload (not just MIME type)
+- **US-028**: Validate annotation data shape against lib/annotation-types.ts
+- **US-029**: Add database indexes on foreign keys and high-traffic columns
+- **US-030**: Add loading.tsx and error.tsx boundaries for key routes
+- **US-031**: Shared lib/format.ts date formatting utility
+- **US-032**: Convert new-menu page to server component (eliminate useEffect waterfall)

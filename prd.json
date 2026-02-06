@@ -1,86 +1,27 @@
 {
   "project": "LMA Menu Version Control",
-  "phase": "Phase 4 - Settings & Polish",
-  "stories": [
-    {
-      "id": "US-015",
-      "title": "Admin Settings Page",
-      "description": "Create settings page with navigation tabs for admin-only configuration.",
-      "priority": 1,
-      "passes": true,
-      "acceptance_criteria": [
-        "New /settings route accessible only to admin role",
-        "Settings page with tabs: Users, Categories, Tags",
-        "Navigation link in header for admin users",
-        "Redirect non-admin users to dashboard"
-      ]
-    },
-    {
-      "id": "US-016",
-      "title": "User Management",
-      "description": "Admin can view, add, edit, and deactivate users.",
-      "priority": 2,
-      "passes": true,
-      "acceptance_criteria": [
-        "List all users with name, role, status",
-        "Add new user form (name, password, role)",
-        "Edit user (name, role)",
-        "Reset user password",
-        "Deactivate/reactivate user toggle"
-      ]
-    },
-    {
-      "id": "US-017",
-      "title": "Category Management",
-      "description": "Admin can add, edit, reorder, and delete menu categories.",
-      "priority": 3,
-      "passes": true,
-      "acceptance_criteria": [
-        "List all categories with sort order",
-        "Add new category",
-        "Edit category name",
-        "Delete category (only if no menus use it)",
-        "Drag to reorder categories"
-      ]
-    },
-    {
-      "id": "US-018",
-      "title": "Tag Management",
-      "description": "Admin can add, edit, and delete menu tags with colors.",
-      "priority": 4,
-      "passes": true,
-      "acceptance_criteria": [
-        "List all tags with color preview",
-        "Add new tag with name and color picker",
-        "Edit tag name and color",
-        "Delete tag (only if no menus use it)"
-      ]
-    },
-    {
-      "id": "US-019",
-      "title": "Export Menu History",
-      "description": "Export version history for a menu as CSV.",
-      "priority": 5,
-      "passes": true,
-      "acceptance_criteria": [
-        "Export button on menu detail page",
-        "CSV includes: version label, status, date, uploader, reason, summary",
-        "Download triggers browser file save",
-        "Filename includes menu name and date"
-      ]
-    },
-    {
-      "id": "US-020",
-      "title": "Export Activity Log",
-      "description": "Export filtered activity log as CSV.",
-      "priority": 6,
-      "passes": true,
-      "acceptance_criteria": [
-        "Export button on activity page",
-        "CSV includes: date, user, action, target, details",
-        "Export respects current filters",
-        "Filename includes date range"
-      ]
-    }
+  "note": "This file is kept for reference. The canonical PRD used by Ralph is at scripts/ralph/prd.json.",
+  "completedPhases": {
+    "phase1": "Core Foundation (US-001 to US-005)",
+    "phase2": "Enhanced UX (US-006 to US-010)",
+    "phase3": "Collaboration (US-011 to US-014)",
+    "phase4": "Admin & Export (US-015 to US-020)"
+  },
+  "inProgress": {
+    "phase5": "Annotations & Polish (US-021 to US-024) — US-021 complete, US-022 to US-024 remaining",
+    "phase6": "Hardening & Quality (US-025 to US-032)"
+  },
+  "nextUp": [
+    { "id": "US-022", "title": "Edit Tags on Existing Menus", "phase": 5 },
+    { "id": "US-023", "title": "Tag Filtering on Dashboard", "phase": 5 },
+    { "id": "US-024", "title": "Mobile Responsive Polish", "phase": 5 },
+    { "id": "US-025", "title": "Extract Shared Auth Config and Harden JWT Secret", "phase": 6 },
+    { "id": "US-026", "title": "Add Error Handling to Unprotected API Routes", "phase": 6 },
+    { "id": "US-027", "title": "Validate PDF Magic Bytes on Upload", "phase": 6 },
+    { "id": "US-028", "title": "Validate Annotation Data Shape", "phase": 6 },
+    { "id": "US-029", "title": "Add Database Indexes for Query Performance", "phase": 6 },
+    { "id": "US-030", "title": "Add Loading and Error Boundaries", "phase": 6 },
+    { "id": "US-031", "title": "Shared Date Formatting Utility", "phase": 6 },
+    { "id": "US-032", "title": "Convert New Menu Page to Server Component", "phase": 6 }
   ]
 }
